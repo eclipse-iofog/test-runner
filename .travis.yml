@@ -1,0 +1,14 @@
+sudo: required
+
+dist: xenial
+
+services:
+  - docker
+ 
+jobs:
+  include:
+    - stage: build-publish
+      script:
+      - |
+        make build-img
+        make push-img
