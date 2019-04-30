@@ -30,14 +30,17 @@ done
 echo "---------- ----------------- ----------
 "
 
+ERR=0
 echo "----------    SMOKE TESTS    ----------"
-pyresttest http://"$CONTROLLER" tests/smoke/controller.yml
-pyresttest http://"$CONNECTOR" tests/smoke/connector.yml
+pyresttest http://"$CONTROLLER" tests/smoke/controller.yml ; (( ERR |= "$?" ))
+pyresttest http://"$CONNECTOR" tests/smoke/connector.yml ; (( ERR |= "$?" ))
 tests/smoke/agent.bats
 echo "---------- ----------------- ----------
 "
 
 echo "---------- INTEGRATION TESTS ----------"
-tests/integration/integration.bats
+tests/integration/integration.bats ; (( ERR |= "$?" ))
 echo "---------- ----------------- ----------
 "
+
+exit "$ERR"
