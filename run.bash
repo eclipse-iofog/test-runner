@@ -42,8 +42,7 @@ echo "---------- ----------------- ----------
 ERR=0
 echo "----------    SMOKE TESTS    ----------"
 pyresttest http://"$CONTROLLER" tests/smoke/controller.yml ; (( ERR |= "$?" ))
-# TODO: (Serge) Enable Connector smoke tests when they are fixed
-#pyresttest http://"$CONNECTOR" tests/smoke/connector.yml ; (( ERR |= "$?" ))
+pyresttest http://"$CONNECTOR" tests/smoke/connector.yml ; (( ERR |= "$?" ))
 tests/smoke/agent.bats
 echo "---------- ----------------- ----------
 "
