@@ -6,6 +6,7 @@
 ---
 - config:
     - testset: "Testing connection to iofog-controller via REST API"
+    - timeout: 300000 # 5 seconds
 
 - test:
     - name: "Non Auth Connection"

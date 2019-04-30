@@ -4,7 +4,8 @@
 
 ---
 -  config:
-    -   testset: "Testing connection to iofog-connector via REST API"
+    - testset: "Testing connection to iofog-connector via REST API"
+    - timeout: 300000 # 5 seconds
 
 - test:
       - name: "Add Public Pipe"

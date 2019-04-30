@@ -12,9 +12,10 @@ importAgents
   forAgents "iofog-agent status"
 }
 
-@test "Checking Agents Network Interface Config" {
-  forAgentsOutputContains "cat /etc/iofog-agent/config.xml | grep '<network_interface>'" "eth0"
-}
+# TODO: (Serge) Interface names changes based on deployment, rewrite this test
+#@test "Checking Agents Network Interface Config" {
+#  forAgentsOutputContains "cat /etc/iofog-agent/config.xml | grep '<network_interface>'" "eth0"
+#}
 
 @test "iofog-agent version" {
   forAgentsOutputContains "iofog-agent version" "1.0"

@@ -6,7 +6,7 @@ function forAgentsOutputContains(){
     CMD="$1"
     SUBSTR="$2"
     for AGENT in "${AGENTS[@]}"; do
-        RESULT=$(ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" "$CMD")
+        RESULT=$(ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" "sudo $CMD")
         [[ "$RESULT" == *"$SUBSTR"* ]]
     done
 }
@@ -14,7 +14,7 @@ function forAgentsOutputContains(){
 function forAgents(){
     CMD="$1"
     for AGENT in "${AGENTS[@]}"; do
-        ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" "$CMD"
+        ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" "sudo $CMD"
     done
 }
 
