@@ -18,14 +18,20 @@ ${AGENTS[@]}
 "
 
 # Wait until services are up
+echo "Waiting for Controller and Connector APIs..."
 for HOST in http://"$CONTROLLER" http://"$CONNECTOR"; do
   waitFor "$HOST"
 done
 
-# Verify SSH connections to Agents
+# Verify SSH connections to Agents and wait for them to be provisioned
+echo "Waiting for Agents to provision with Controller..."
 for AGENT in "${AGENTS[@]}"; do
-  echo "SSH into $AGENT"
-  ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" echo "Successfully connected to $AGENT via SSH"
+  RESULT=$(ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" iofog-agent status | grep 'Connection to Controller')
+  while [[ "$RESULT" != *"ok"* ]]; do
+    RESULT=$(ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" iofog-agent status | grep 'Connection to Controller')
+    sleep 1
+  done
+  echo "$AGENT provisioned successfully"
 done
 echo "---------- ----------------- ----------
 "
