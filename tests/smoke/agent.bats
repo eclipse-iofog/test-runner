@@ -40,3 +40,13 @@ importAgents
 @test "iofog-agent config VALID RAM" {
   forAgentsOutputContains "iofog-agent config -m 1024" "New Value"
 }
+
+# Test that the SSH connection to Agents is Valid
+@test "Integration Test UUID is Available" {
+  forAgentsOutputContains "iofog-agent info | grep UUID" "UUID"
+}
+
+# Test that the SSH connection to Agents is Valid
+@test "Integration Test Connection to Controller" {
+  forAgentsOutputContains "iofog-agent status | grep 'Connection to Controller'" "ok"
+}

@@ -9,10 +9,10 @@
     - timeout: 600000 # 10 seconds
 
 - test:
-    - name: "Non Auth Connection"
-    - group: "Controller"
-    - url: "/api/v3/iofog"
-    - expected_status: [404]
+      - name: "Non Auth Connection"
+      - group: "Controller"
+      - url: "/api/v3/iofog"
+      - expected_status: [404]
 
 - test:
       - name: "Get Status"
@@ -67,7 +67,18 @@
       - expected_status: [200]
 
 - test:
-      - name: "Get Flow"
+      - name: "Create new flow"
+      - group: "Flow"
+      - url: "/api/v3/flow"
+      - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
+      - body: '{ "name": "testflow", "description": "none", "isActivated": true }'
+      - method: "POST"
+      - expected_status: [201]
+      - extract_binds:
+        - 'flow_id': {'jsonpath_mini': 'id'}
+
+- test:
+      - name: "Get list of flows"
       - group: "Flow"
       - url: "/api/v3/flow"
       - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
@@ -108,9 +119,9 @@
       - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
       - body: '{"name":"agent-smith","fogType":0}'
       - method: "POST"
+      - expected_status: [201]
       - extract_binds:
         - 'uuid': {'jsonpath_mini': 'uuid'}
-      - expected_status: [201]
 
 - test:
       - name: "Provision Key for Agent"
@@ -121,6 +132,14 @@
       - extract_binds:
         - 'key': {'jsonpath_mini': 'key'}
       - expected_status: [201]
+
+- test:
+      - name: "Get List of Microservices"
+      - group: "Microservices"
+      - url: {'template':"/api/v3/microservices?flowId=$flow_id"}
+      - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
+      - method: "GET"
+      - expected_status: [200]
 
 - test:
       - name: "Get Microservices Catalog"
