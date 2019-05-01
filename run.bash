@@ -48,7 +48,7 @@ echo "---------- ----------------- ----------
 "
 
 echo "---------- INTEGRATION TESTS ----------"
-tests/integration/integration.bats ; (( ERR |= "$?" ))
+pyresttest http://"$CONTROLLER" tests/integration/deploy-weather.yml ; (( ERR |= "$?" ))
 echo "---------- ----------------- ----------
 "
 
