@@ -4,8 +4,16 @@
 # Wait until we can connect to a url given in $1
 #
 function waitFor() {
-    until $(curl --output /dev/null --silent --head --connect-to --url ${1}); do
-      sleep 2
+    URL="$1"
+    TIMEOUT="$2"
+    ITER=0
+    until $(curl --output /dev/null --silent --head --connect-to --url "$URL"); do
+      sleep 1
+      ITER=$((ITER+1))
+      if [[ "$ITER" -gt "$TIMEOUT" ]] ; then
+        echo "Timed out waiting for $URL"
+        exit 1
+      fi
     done
 }
 

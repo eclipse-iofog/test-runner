@@ -4,12 +4,14 @@
 
 ---
 -  config:
-    - testset: "Deploying Weathe App to Iofog"
+    - testset: "Deploying Weather App to Iofog"
     - timeout: 600000 # 10 seconds
+    - generators:
+        - 'agentIdx': {type: 'env_variable', variable_name: 'IDX'}
 
 - test:
       - name: "Login"
-      - group: "Weather"
+      - group: "Deploy Weather Microservice"
       - url: "/api/v3/user/login"
       - headers: {'Content-Type': 'application/json'}
       - body: '{"email":"user@domain.com","password":"#Bugs4Fun"}'
@@ -19,33 +21,22 @@
         - 'accessToken': {'jsonpath_mini': 'accessToken'}
 
 - test:
-      - name: "Create new flow"
-      - group: "Weather"
-      - url: "/api/v3/flow"
-      - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
-      - body: '{ "name": "integration", "description": "none", "isActivated": true }'
-      - method: "POST"
-      - expected_status: [201]
-      - extract_binds:
-        - 'flowId': {'jsonpath_mini': 'id'}
-
-- test:
       - name: "Get Iofog Node List"
-      - group: "Weather"
+      - group: "Deploy Weather Microservice"
       - url: "/api/v3/iofog-list"
       - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
       - method: "GET"
       - expected_status: [200]
+      - generator_binds: {idx: agentIdx}
       - extract_binds:
-        - 'iofogUUID': {'jsonpath_mini': 'fogs.0.uuid'}
+        - 'iofogUUID': {'jsonpath_mini': {template: "fogs.$idx.uuid"}}
 
-# TODO: (Serge) Figure out how to template flow_id without it being a string in the JSON... That is why 2 is hardcoded below.
 - test:
       - name: "Create microservice"
-      - group: "Weather"
+      - group: "Deploy Weather Microservice"
       - url: "/api/v3/microservices"
       - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
-      - body: {template: '{"name": "JSON Rest API", "catalogItemId": 7, "flowId": 2, "iofogUuid": "$iofogUUID", "config": "{\"buffersize\":3,\"contentdataencoding\":\"utf8\",\"contextdataencoding\":\"utf8\",\"outputfields\":{\"publisher\":\"source\",\"contentdata\":\"temperature\",\"timestamp\":\"time\"}}", "ports": [{"internal": 80,"external": 5555}]}'}
+      - body: {template: '{"name": "JSON Rest API", "catalogItemId": 7, "flowId": 1, "iofogUuid": "$iofogUUID", "config": "{\"buffersize\":3,\"contentdataencoding\":\"utf8\",\"contextdataencoding\":\"utf8\",\"outputfields\":{\"publisher\":\"source\",\"contentdata\":\"temperature\",\"timestamp\":\"time\"}}", "ports": [{"internal": 80,"external": 5555}]}'}
       - method: "POST"
       - expected_status: [201]
       - extract_binds:
@@ -53,11 +44,19 @@
 
 - test:
       - name: "Create microservice"
-      - group: "Weather"
+      - group: "Deploy Weather Microservice"
       - url: "/api/v3/microservices"
       - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
-      - body: {template: '{"name": "Weather", "catalogItemId": 6, "flowId": 2, "iofogUuid": "$iofogUUID", "config": "{\"citycode\":\"5391997\",\"apikey\":\"6141811a6136148a00133488eadff0fb\",\"frequency\":1000}", "routes": ["$firstId"]}'}
+      - body: {template: '{"name": "Deploy Weather Microservice", "catalogItemId": 6, "flowId": 1, "iofogUuid": "$iofogUUID", "config": "{\"citycode\":\"5391997\",\"apikey\":\"6141811a6136148a00133488eadff0fb\",\"frequency\":1000}", "routes": ["$firstId"]}'}
       - method: "POST"
       - expected_status: [201]
       - extract_binds:
         - 'secondId': {'jsonpath_mini': 'uuid'}
+
+- test:
+      - name: "Logout"
+      - group: "Deploy Weather Microservice"
+      - url: "/api/v3/user/logout"
+      - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
+      - method: "POST"
+      - expected_status: [204]

@@ -52,7 +52,7 @@
       - group: "User"
       - url: "/api/v3/user/login"
       - headers: {'Content-Type': 'application/json'}
-      - body: '{"email":"serge@edgeworx.io","password":"123pwer89iu23409i"}'
+      - body: '{"email":"user@domain.com","password":"#Bugs4Fun"}'
       - method: "POST"
       - expected_status: [200]
       - extract_binds:
