@@ -1,0 +1,12 @@
+---
+-  config:
+    - testset: "Testing Weather App to Iofog"
+    - timeout: 600000 # 10 seconds
+
+- test:
+      - name: "Hit JSON REST API"
+      - group: "Test Weather Microservice"
+      - url: "/"
+      - headers: {'Content-Type': 'application/json'}
+      - method: "GET"
+      - expected_status: [200]

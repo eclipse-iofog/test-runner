@@ -44,29 +44,27 @@ echo "----------    SMOKE TESTS    ----------"
 pyresttest http://"$CONTROLLER" tests/smoke/controller.yml ; (( ERR |= "$?" ))
 pyresttest http://"$CONNECTOR" tests/smoke/connector.yml ; (( ERR |= "$?" ))
 tests/smoke/agent.bats
-echo "---------- ----------------- ----------
-"
+echo "---------- ----------------- ---------- "
 
 echo "---------- INTEGRATION TESTS ----------"
-# Spin up microservice for each agent
 for IDX in "${!AGENTS[@]}"; do
   export IDX
+  # Spin up
   pyresttest http://"$CONTROLLER" tests/integration/deploy-weather.yml ; (( ERR |= "$?" ))
-done
-# TODO: (Serge) Test each weather microservice
-#for IDX in "${!AGENTS[@]}"; do
-#  export IDX
-#  pyresttest http://"$CONTROLLER" tests/integration/test-weather.yml ; (( ERR |= "$?" ))
+
+  # Set endpoint to test microservice
+  ENDPOINT=host.docker.internal:5555
+  if [[ -z "$LOCAL" ]]; then
+    HOST="${AGENTS[$IDX]}"
+    ENDPOINT="${HOST##*@}":5555
+  fi
 
   # Wait for, and curl the microservices
-  #HOST="${AGENTS[$IDX]}"
-  #echo "Waiting for endpoint: ${HOST##*@}:5555"
-  #waitFor http://"${HOST##*@}":5555 180
-  #curl http://"${HOST##*@}":5555 --connect-timeout 10
-#done
-# Spin down microservice for each agent
-for IDX in "${!AGENTS[@]}"; do
-  export IDX
+  echo "Waiting for endpoint: $ENDPOINT"
+  waitFor http://"$ENDPOINT" 180
+  pyresttest http://"$ENDPOINT" tests/integration/test-weather.yml ; (( ERR |= "$?" ))
+
+  # Destroy
   pyresttest http://"$CONTROLLER" tests/integration/destroy-weather.yml ; (( ERR |= "$?" ))
 done
 echo "---------- ----------------- ----------

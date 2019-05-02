@@ -1,7 +1,3 @@
-#
-# Test connecting to iofog-controller via HTTP
-#
-
 ---
 -  config:
     - testset: "Destroying Weather App to Iofog"

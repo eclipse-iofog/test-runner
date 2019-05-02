@@ -1,7 +1,3 @@
-#
-# Test connecting to iofog-controller via HTTP
-#
-
 ---
 -  config:
     - testset: "Deploying Weather App to Iofog"

@@ -13,6 +13,8 @@ services:
     test-runner:
         image: iofog/test-runner-develop:latest
         container_name: test-runner
+        environment:
+            - LOCAL=1
         network_mode: "bridge"
         external_links: 
             - iofog-controller
