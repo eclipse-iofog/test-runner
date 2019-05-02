@@ -47,11 +47,15 @@ tests/smoke/agent.bats
 echo "---------- ----------------- ---------- "
 
 echo "---------- INTEGRATION TESTS ----------"
+# Spin up microservices
 for IDX in "${!AGENTS[@]}"; do
   export IDX
-  # Spin up
   pyresttest http://"$CONTROLLER" tests/integration/deploy-weather.yml ; (( ERR |= "$?" ))
+done
 
+# Test microservices
+for IDX in "${!AGENTS[@]}"; do
+  export IDX
   # Set endpoint to test microservice
   ENDPOINT=host.docker.internal:5555
   if [[ -z "$LOCAL" ]]; then
@@ -63,8 +67,11 @@ for IDX in "${!AGENTS[@]}"; do
   echo "Waiting for endpoint: $ENDPOINT"
   waitFor http://"$ENDPOINT" 180
   pyresttest http://"$ENDPOINT" tests/integration/test-weather.yml ; (( ERR |= "$?" ))
+done
 
-  # Destroy
+# Teardown microservices
+for IDX in "${!AGENTS[@]}"; do
+  export IDX
   pyresttest http://"$CONTROLLER" tests/integration/destroy-weather.yml ; (( ERR |= "$?" ))
 done
 echo "---------- ----------------- ----------
