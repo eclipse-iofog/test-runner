@@ -29,9 +29,9 @@ ITER=0
 for AGENT in "${AGENTS[@]}"; do
   RESULT=$(ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" sudo iofog-agent status | grep 'Connection to Controller')
   while [[ "$RESULT" != *"ok"* ]]; do
-    if [[ "$ITER" -gt 60 ]]; then exit 1; fi
+    if [[ "$ITER" -gt 30 ]]; then exit 1; fi
     RESULT=$(ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" sudo iofog-agent status | grep 'Connection to Controller')
-    sleep 1
+    sleep 5
     ITER=$((ITER+1))
   done
   echo "$AGENT provisioned successfully"
