@@ -21,10 +21,7 @@ variables:
 
 jobs:
   - job: TriggerOtherJobs
-    dependsOn: TestRunner
     pool: server
-    variables:
-      tag: $[ dependencies.TestRunner.outputs['setVarStep.tag'] ]
 
     steps:
 
@@ -33,57 +30,6 @@ jobs:
         inputs:
           connectionType: 'connectedServiceName'
           serviceConnection: 'Pipelines'
-          method: 'POST'
+          method: 'GET'
           urlSuffix: '/edgeworx/_apis/build/builds?api-version=5.0'
-          body: "{\"Parameters\":\"{\\\"images.runner\\\": \\\"gcr.io/$(repository):$(tag)\\\"}\", \"Definition\":{\"id\":\"5\"}}"
           waitForCompletion: 'false'
-
-      - task: InvokeRESTAPI@1
-        displayName: 'Trigger demo job'
-        inputs:
-          connectionType: 'connectedServiceName'
-          serviceConnection: 'Pipelines'
-          method: 'POST'
-          urlSuffix: '/edgeworx/_apis/build/builds?api-version=5.0'
-          body: "{\"Parameters\":\"{\\\"images.runner\\\": \\\"gcr.io/$(repository):$(tag)\\\"}\", \"Definition\":{\"id\":\"12\"}}"
-          waitForCompletion: 'false'
-
-  - job: TestRunner
-    pool:
-      vmImage: 'Ubuntu-16.04'
-
-    steps:
-
-      - bash: |
-          if [ $(type) = 'develop' ]; then
-             echo "##vso[task.setvariable variable=tag]dev-$(commit)"
-             echo "##vso[task.setvariable variable=tag;isOutput=true]dev-$(commit)"
-          elif [ $(type) = 'release' ]; then
-             echo "##vso[task.setvariable variable=tag]rel-$(commit)"
-             echo "##vso[task.setvariable variable=tag;isOutput=true]rel-$(commit)"
-          elif [ $(type) = 'master' ]; then
-             echo "##vso[task.setvariable variable=tag]0.0.0"
-             echo "##vso[task.setvariable variable=tag;isOutput=true]0.0.0"
-          fi
-        displayName: 'Set image tag variables'
-        name: setVarStep
-      
-      - task: Docker@2
-        displayName: 'Build docker'
-        inputs:
-          containerRegistry: 'Edgeworx GCP'
-          repository: $(repository)
-          command: 'build'
-          Dockerfile: "Dockerfile"
-          tags: |
-            $(tag)
-
-      - task: Docker@2
-        displayName: 'Push docker'
-        inputs:
-          containerRegistry: 'Edgeworx GCP'
-          repository: $(repository)
-          command: 'push'
-          Dockerfile: "Dockerfile"
-          tags: |
-            $(tag)
