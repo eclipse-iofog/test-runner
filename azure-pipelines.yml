@@ -20,7 +20,7 @@ variables:
   commit: $(Build.SourceVersion)
 
 jobs:
-  - job: Platform
+  - job: TriggerOtherJobs
     dependsOn: TestRunner
     pool: server
     variables:
@@ -29,13 +29,23 @@ jobs:
     steps:
 
       - task: InvokeRESTAPI@1
-        displayName: 'trigger platform job'
+        displayName: 'Trigger platform job'
         inputs:
           connectionType: 'connectedServiceName'
           serviceConnection: 'Pipelines'
           method: 'POST'
           urlSuffix: '/edgeworx/_apis/build/builds?api-version=5.0'
           body: "{\"Parameters\":\"{\\\"images.runner\\\": \\\"gcr.io/$(repository):$(tag)\\\"}\", \"Definition\":{\"id\":\"5\"}}"
+          waitForCompletion: 'false'
+
+      - task: InvokeRESTAPI@1
+        displayName: 'Trigger demo job'
+        inputs:
+          connectionType: 'connectedServiceName'
+          serviceConnection: 'Pipelines'
+          method: 'POST'
+          urlSuffix: '/edgeworx/_apis/build/builds?api-version=5.0'
+          body: "{\"Parameters\":\"{\\\"images.runner\\\": \\\"gcr.io/$(repository):$(tag)\\\"}\", \"Definition\":{\"id\":\"12\"}}"
           waitForCompletion: 'false'
 
   - job: TestRunner
