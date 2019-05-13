@@ -54,21 +54,22 @@ for IDX in "${!AGENTS[@]}"; do
   pyresttest http://"$CONTROLLER" tests/integration/deploy-weather.yml ; (( ERR |= "$?" ))
 done
 
-# Test microservices
-for IDX in "${!AGENTS[@]}"; do
-  export IDX
-  # Set endpoint to test microservice
-  ENDPOINT=host.docker.internal:5555
-  if [[ -z "$LOCAL" ]]; then
-    HOST="${AGENTS[$IDX]}"
-    ENDPOINT="${HOST##*@}":5555
-  fi
-
-  # Wait for, and curl the microservices
-  echo "Waiting for endpoint: $ENDPOINT"
-  waitFor http://"$ENDPOINT" 180
-  pyresttest http://"$ENDPOINT" tests/integration/test-weather.yml ; (( ERR |= "$?" ))
-done
+# TODO: (Serge) Enable these tests when TestRunner container can hit Microservice endpoints
+## Test microservices
+#for IDX in "${!AGENTS[@]}"; do
+#  export IDX
+#  # Set endpoint to test microservice
+#  ENDPOINT=host.docker.internal:5555
+#  if [[ -z "$LOCAL" ]]; then
+#    HOST="${AGENTS[$IDX]}"
+#    ENDPOINT="${HOST##*@}":5555
+#  fi
+#
+#  # Wait for, and curl the microservices
+#  echo "Waiting for endpoint: $ENDPOINT"
+#  waitFor http://"$ENDPOINT" 180
+#  pyresttest http://"$ENDPOINT" tests/integration/test-weather.yml ; (( ERR |= "$?" ))
+#done
 
 # Teardown microservices
 for IDX in "${!AGENTS[@]}"; do
