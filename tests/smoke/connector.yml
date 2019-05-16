@@ -46,3 +46,21 @@
       - body: {'template':"mappingid=$private_id"}
       - method: 'POST'
       - expected_status: [200]
+
+- test:
+      - name: "Remove Non-existent Public Pipe"
+      - group: "Connector"
+      - url: "api/v2/mapping/remove"
+      - headers: {'content-type': 'application/x-www-form-urlencoded', 'cache-control': 'no-cache'}
+      - body: {'template':"mappingid=$public_id"}
+      - method: 'POST'
+      - expected_status: [404]
+
+- test:
+      - name: "Remove Non-existent Private Pipe"
+      - group: "Connector"
+      - url: {'template':"/api/v2/mapping/remove"}
+      - headers: {'content-type': 'application/x-www-form-urlencoded', 'cache-control': 'no-cache'}
+      - body: {'template':"mappingid=$private_id"}
+      - method: 'POST'
+      - expected_status: [404]
