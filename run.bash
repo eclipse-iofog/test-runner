@@ -33,6 +33,7 @@ for AGENT in "${AGENTS[@]}"; do
     RESULT=$(ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" sudo iofog-agent status | grep 'Connection to Controller')
     sleep 5
     ITER=$((ITER+1))
+    echo -ne "."
   done
   echo "$AGENT provisioned successfully"
 done

@@ -9,6 +9,7 @@ function waitFor() {
     ITER=0
     until $(curl --output /dev/null --silent --head --connect-to --url "$URL"); do
       sleep 1
+      echo -ne "."
       ITER=$((ITER+1))
       if [[ "$ITER" -gt "$TIMEOUT" ]] ; then
         echo "Timed out waiting for $URL"
@@ -18,7 +19,7 @@ function waitFor() {
 }
 
 #
-# Read all agents from config file
+# Read all Agents from config file
 #
 function importAgents() {
     AGENTS=()
