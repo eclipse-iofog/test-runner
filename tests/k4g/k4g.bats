@@ -13,9 +13,9 @@
 }
 
 # Test that the describing individual pods works
-@test "Check Specific Pods" {
-  PODS=$("kubectl get pods -n iofog --kubeconfig conf/kube.conf | awk 'NR>1 {print $1}'")
-  for pod in $PODS; do
+@test "Describe Specific Pods" {
+  PODS=getPods
+  for pod in ${PODS}; do
       forKubectl "describe ${pod}"
   done
 }
