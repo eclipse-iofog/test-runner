@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bats
 
 . functions.bash
 
@@ -77,6 +77,13 @@ for IDX in "${!AGENTS[@]}"; do
   export IDX
   pyresttest http://"$CONTROLLER" tests/integration/destroy-weather.yml ; (( ERR |= "$?" ))
 done
+echo "---------- ----------------- ----------
+"
+
+echo "---------- K4G TESTS ----------"
+KUBE_CONF="./conf/kube.conf"
+./tests/k4g/k4g.bats ${KUBE_CONF}
+
 echo "---------- ----------------- ----------
 "
 

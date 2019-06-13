@@ -66,16 +66,16 @@
       - method: "GET"
       - expected_status: [200]
 
-- test:
-      - name: "Create new flow"
-      - group: "Flow"
-      - url: "/api/v3/flow"
-      - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
-      - body: '{ "name": "testflow", "description": "none", "isActivated": true }'
-      - method: "POST"
-      - expected_status: [201]
-      - extract_binds:
-        - 'flow_id': {'jsonpath_mini': 'id'}
+#- test:
+#      - name: "Create new flow"
+#      - group: "Flow"
+#      - url: "/api/v3/flow"
+#      - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
+#      - body: '{ "name": "testflow", "description": "none", "isActivated": true }'
+#      - method: "POST"
+#      - expected_status: [201]
+#      - extract_binds:
+#        - 'flow_id': {'jsonpath_mini': 'id'}
 
 - test:
       - name: "Get list of flows"
@@ -93,13 +93,13 @@
       - method: "GET"
       - expected_status: [200]
 
-- test:
-      - name: "Get List of Microservices"
-      - group: "Microservices"
-      - url: {'template':"/api/v3/microservices?flowId=$flow_id"}
-      - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
-      - method: "GET"
-      - expected_status: [200]
+#- test:
+#      - name: "Get List of Microservices"
+#      - group: "Microservices"
+#      - url: {'template':"/api/v3/microservices?flowId=$flow_id"}
+#      - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
+#      - method: "GET"
+#      - expected_status: [200]
 
 - test:
       - name: "Get Microservices Catalog"
