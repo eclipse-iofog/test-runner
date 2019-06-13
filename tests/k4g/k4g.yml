@@ -1,0 +1,28 @@
+#
+# Test kubectl endpoints
+#
+
+---
+-  config:
+     -   testset: "Testing kubectl orchestration through REST API endpoints"
+
+- test:
+    - name: "Login"
+    - group: "User"
+    - url: "/api/v3/user/login"
+    - headers: {'Content-Type': 'application/json'}
+    - body: '{"email":"serge@edgeworx.io","password":"123pwer89iu23409i"}'
+    - method: "POST"
+    - expected_status: [200]
+    - extract_binds:
+        - 'accessToken': {'jsonpath_mini': 'accessToken'}
+
+- test:
+    - name: "Check Applications"
+    - group: "Controller"
+    - url: "/api/v3/microservices/"
+    - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
+    - method: 'GET'
+    - expected_status: [200]
+    - extract_binds:
+        - 'public_id': {'jsonpath_mini': 'id'}

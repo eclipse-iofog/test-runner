@@ -18,6 +18,19 @@ function forAgents(){
     done
 }
 
+function forKubectl(){
+    CMD="$1"
+    result=$(kubectl "$CMD" --kubeconfig ../conf/kube.conf)
+    [[ $? > 0 ]]
+}
+
+function forKubectlOutputContains(){
+    CMD="$1"
+    SUBSTR="$2"
+    result=$(kubectl "$CMD" --kubeconfig ../conf/kube.conf)
+    [[ ${result} == *"$SUBSTR"* ]]
+}
+
 # Import our config stuff, so we aren't hardcoding the variables we're testing for. Add to this if more tests are needed
 function importConfig() {
     CONF=$(cat config.json)
