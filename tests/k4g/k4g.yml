@@ -8,7 +8,7 @@
 
 - test:
     - name: "Login"
-    - group: "User"
+    - group: "K4G"
     - url: "/api/v3/user/login"
     - headers: {'Content-Type': 'application/json'}
     - body: '{"email":"serge@edgeworx.io","password":"123pwer89iu23409i"}'
@@ -19,7 +19,7 @@
 
 - test:
     - name: "Check Applications"
-    - group: "Controller"
+    - group: "K4G"
     - url: "/api/v3/microservices/"
     - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
     - method: 'GET'
@@ -29,7 +29,7 @@
 
 - test:
     - name: "Logout"
-    - group: "Deploy Weather Microservice"
+    - group: "K4G"
     - url: "/api/v3/user/logout"
     - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
     - method: "POST"
