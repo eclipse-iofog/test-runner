@@ -7,6 +7,14 @@
   forKubectl "get pods"
 }
 
+# Test that we can get pods
+@test "Check Kubectl Pods" {
+  PODS=getPods
+  for pod in ${PODS}; do
+      forKubectl "get ${pod}"
+  done
+}
+
 # Test that the pods description is valid
 @test "Kubectl Describe" {
   forKubectl "describe pods"

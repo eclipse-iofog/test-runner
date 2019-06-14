@@ -26,3 +26,11 @@
     - expected_status: [200]
     - extract_binds:
         - 'public_id': {'jsonpath_mini': 'id'}
+
+- test:
+    - name: "Logout"
+    - group: "Deploy Weather Microservice"
+    - url: "/api/v3/user/logout"
+    - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
+    - method: "POST"
+    - expected_status: [204]

@@ -6,6 +6,16 @@ It is recommended you run Test Runner using docker-compose.
 
 You must provide agents.conf and a corresponding id_ecdsa/id_ecdsa.pub pair in /conf of the runner. This should be done through a volume in your docker-compose.yml.
 
+To Run K4G testing, you must also pass a kube.conf file to `run.bash` with the `-k` argument
+
+e.g.
+```bash
+./run.bash -k /path/to/file/kube.conf
+```
+
+or for automated deploy testing, please ensure that your agents.conf file contains a top level
+`kubeconf` key, with the location of the file.
+
 For local deployments:
 ```
 version: "3"

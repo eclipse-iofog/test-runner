@@ -2,6 +2,13 @@
 
 . functions.bash
 
+# Please pass the location to your kube.conf file here
+while getopts ":k" opt; do
+  case $opt in
+    k) KUBE_CONF=$OPTARG ;;
+  esac
+done
+
 # Read Controller, Connector, and Agents from config files
 CONTROLLER=$(cat conf/controller.conf | tr -d '\n')
 CONNECTOR=$(cat conf/connector.conf | tr -d '\n')
@@ -81,7 +88,11 @@ echo "---------- ----------------- ----------
 "
 
 echo "---------- K4G TESTS ----------"
-tests/k4g/k4g.bats
+if [[ ${KUBE_CONF} ]]; then
+    tests/k4g/k4g.bats ${KUBE_CONF}
+else
+    echo "No kube.conf file passed in. To run K4G tests please pass the location of the file with -k"
+fi
 echo "---------- ----------------- ----------
 "
 

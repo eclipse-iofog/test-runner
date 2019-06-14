@@ -21,7 +21,7 @@ function forAgents(){
 # Kubectl with status comparison
 function forKubectl(){
     CMD="$1"
-    result=$(kubectl "$CMD" --kubeconfig ../conf/kube.conf)
+    result=$(kubectl "$CMD" -n iofog --kubeconfig ../conf/kube.conf)
     [[ $? > 0 ]]
 }
 
@@ -29,7 +29,7 @@ function forKubectl(){
 function forKubectlOutputContains(){
     CMD="$1"
     SUBSTR="$2"
-    result=$(kubectl "$CMD" --kubeconfig ../conf/kube.conf)
+    result=$(kubectl "$CMD" -n iofog --kubeconfig ../conf/kube.conf)
     [[ ${result} == *"$SUBSTR"* ]]
 }
 
