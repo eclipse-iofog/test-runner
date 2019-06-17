@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-. ../functions.bash
+. ./functions.bash
 
 function forAgentsOutputContains(){
     CMD="$1"
@@ -16,6 +16,31 @@ function forAgents(){
     for AGENT in "${AGENTS[@]}"; do
         ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" "sudo $CMD"
     done
+}
+
+# Kubectl with status comparison
+function forKubectl(){
+    CMD="$1"
+    KUBE_CONF="conf/kube.conf"
+    result=$(kubectl ${CMD} --kubeconfig ${KUBE_CONF})
+    [[ $? == 0 ]]
+}
+
+# Kubectl with status comparison
+function NegativeKubeCtl(){
+    CMD="$1"
+    KUBE_CONF="conf/kube.conf"
+    result=$(kubectl ${CMD} --kubeconfig ${KUBE_CONF})
+    [[ $? > 0 ]]
+}
+
+# Kubectl with output comparison
+function forKubectlOutputContains(){
+    CMD="$1"
+    SUBSTR="$2"
+    KUBE_CONF="$3"
+    result=$(kubectl "$CMD" --kubeconfig "$KUBE_CONF")
+    [[ ${result} == *"$SUBSTR"* ]]
 }
 
 # Import our config stuff, so we aren't hardcoding the variables we're testing for. Add to this if more tests are needed
