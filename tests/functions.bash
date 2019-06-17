@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-. ../functions.bash
+. ./functions.bash
 
 function forAgentsOutputContains(){
     CMD="$1"
@@ -21,7 +21,16 @@ function forAgents(){
 # Kubectl with status comparison
 function forKubectl(){
     CMD="$1"
-    result=$(kubectl "$CMD" -n iofog --kubeconfig ../conf/kube.conf)
+    KUBE_CONF="conf/kube.conf"
+    result=$(kubectl ${CMD} --kubeconfig ${KUBE_CONF})
+    [[ $? == 0 ]]
+}
+
+# Kubectl with status comparison
+function NegativeKubeCtl(){
+    CMD="$1"
+    KUBE_CONF="conf/kube.conf"
+    result=$(kubectl ${CMD} --kubeconfig ${KUBE_CONF})
     [[ $? > 0 ]]
 }
 
@@ -29,14 +38,9 @@ function forKubectl(){
 function forKubectlOutputContains(){
     CMD="$1"
     SUBSTR="$2"
-    result=$(kubectl "$CMD" -n iofog --kubeconfig ../conf/kube.conf)
+    KUBE_CONF="$3"
+    result=$(kubectl "$CMD" --kubeconfig "$KUBE_CONF")
     [[ ${result} == *"$SUBSTR"* ]]
-}
-
-# Get Pods function to remove repeated code
-function getPods(){
-    PODS=($("kubectl get pods -n iofog --kubeconfig conf/kube.conf | awk 'NR>1 {print $1}'"))
-    return ${PODS[@]};
 }
 
 # Import our config stuff, so we aren't hardcoding the variables we're testing for. Add to this if more tests are needed
