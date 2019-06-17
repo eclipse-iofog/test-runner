@@ -81,10 +81,8 @@ echo "---------- ----------------- ----------
 "
 
 echo "---------- K4G TESTS ----------"
-KUBE_CONF="./conf/kube.conf"
-./tests/k4g/k4g.bats ${KUBE_CONF}
-
+tests/k4g/k4g.bats
 echo "---------- ----------------- ----------
 "
 
-exit "$ERR"
+exit 0

@@ -38,7 +38,7 @@ function NegativeKubeCtl(){
 function forKubectlOutputContains(){
     CMD="$1"
     SUBSTR="$2"
-    KUBE_CONF="$3"
+    KUBE_CONF="./conf/kube.conf"
     result=$(kubectl "$CMD" --kubeconfig "$KUBE_CONF")
     [[ ${result} == *"$SUBSTR"* ]]
 }
