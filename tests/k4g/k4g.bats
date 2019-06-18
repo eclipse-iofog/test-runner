@@ -80,7 +80,7 @@
 }
 
 @test "Check Pod Logs" {
-    PODS=($(kubectl get pods -n iofog --kubeconfig ${KUBE_CONF} | awk 'NR>1 {print $1}'))
+  PODS=($(kubectl get pods -n iofog --kubeconfig ${KUBE_CONF} | awk 'NR>1 {print $1}'))
   for pod in ${PODS}; do
       forKubectl "logs ${pod}"
   done
