@@ -3,9 +3,22 @@
 . functions.bash
 
 # Read Controller, Connector, and Agents from config files
-CONTROLLER=$(cat conf/controller.conf | tr -d '\n')
-CONNECTOR=$(cat conf/connector.conf | tr -d '\n')
-importAgents
+YML_FILE=$1
+if ! [[ ${YML_FILE} ]]; then
+    YML_FILE="conf/environment.yml"
+fi
+
+CONTROLLER=$(yaml ${YML_FILE} controllers[0].kubecontrollerip)
+#CONNECTOR=$(yaml ${YML_FILE} connectors[0].connector_ip)
+CONNECTOR="TESTING STUFF"
+AGENTS=($(yaml ${YML_FILE} agents[0].host) $(yaml ${YML_FILE} agents[1].host))
+#i=0
+#until [[ $(yaml ${YML_FILE} agents[${i}]) ]]; do
+#    AGENTS+=$(yaml ${YML_FILE} agents[${i}].name)":"$(yaml ${YML_FILE} agents[${i}].port)
+#    i=${i} + 1
+#done
+
+KUBE_CONF=$(yaml ${YML_FILE} controllers[0].kubeconfig)
 echo "----------   CONFIGURATION   ----------
 [CONTROLLER]
 $CONTROLLER
@@ -19,7 +32,7 @@ ${AGENTS[@]}
 
 # Wait until services are up
 echo "Waiting for Controller and Connector APIs..."
-for HOST in http://"$CONTROLLER" http://"$CONNECTOR"; do
+for HOST in http://"$CONTROLLER"; do
   waitFor "$HOST" 60
 done
 
@@ -85,4 +98,8 @@ tests/k4g/k4g.bats
 echo "---------- ----------------- ----------
 "
 
+echo "---------- IOFOGCTL TESTS ----------"
+echo "Testing..."
+echo "---------- ----------------- ----------
+"
 exit 0

@@ -26,6 +26,25 @@ function forKubectl(){
     [[ $? == 0 ]]
 }
 
+function forIofogCTL(){
+    CMD="$1"
+    result=$(iofogctl ${CMD})
+    [[ $? == 0 ]]
+}
+
+function forIofogCTLNegative(){
+    CMD="$1"
+    result=$(iofogctl ${CMD})
+    [[ $? > 0 ]]
+}
+
+function forIofogCTLCompare(){
+    CMD="$1"
+    SUBSTR="$2"
+    result=$(iofogctl ${CMD})
+    [[ ${result} == *"$SUBSTR"* ]]
+}
+
 # Kubectl with status comparison
 function NegativeKubeCtl(){
     CMD="$1"

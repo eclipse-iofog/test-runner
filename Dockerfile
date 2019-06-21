@@ -11,6 +11,8 @@ RUN apt-get update -qq && apt-get install -y \
     vim \
     jq
 
+RUN brew tap eclipse-iofog/iofogctl && brew install iofogctl
+
 RUN git clone https://github.com/sstephenson/bats.git && cd bats && ./install.sh /usr/local
 
 # Install the pyresttest and deps (the basis of all our smoke tests)
