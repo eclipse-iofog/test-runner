@@ -15,6 +15,7 @@ function forAgents(){
     CMD="$1"
     for AGENT in "${AGENTS[@]}"; do
         ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" "sudo $CMD"
+        [[ $? == 0 ]]
     done
 }
 
@@ -24,6 +25,25 @@ function forKubectl(){
     KUBE_CONF="conf/kube.conf"
     result=$(kubectl ${CMD} --kubeconfig ${KUBE_CONF})
     [[ $? == 0 ]]
+}
+
+function forIofogCTL(){
+    CMD="$1"
+    result=$(iofogctl ${CMD})
+    [[ $? == 0 ]]
+}
+
+function forIofogCTLNegative(){
+    CMD="$1"
+    result=$(iofogctl ${CMD})
+    [[ $? > 0 ]]
+}
+
+function forIofogCTLCompare(){
+    CMD="$1"
+    SUBSTR="$2"
+    result=$(iofogctl ${CMD})
+    [[ ${result} == *"$SUBSTR"* ]]
 }
 
 # Kubectl with status comparison
@@ -38,7 +58,7 @@ function NegativeKubeCtl(){
 function forKubectlOutputContains(){
     CMD="$1"
     SUBSTR="$2"
-    KUBE_CONF="$3"
+    KUBE_CONF="./conf/kube.conf"
     result=$(kubectl "$CMD" --kubeconfig "$KUBE_CONF")
     [[ ${result} == *"$SUBSTR"* ]]
 }

@@ -7,6 +7,10 @@ It is recommended you run Test Runner using docker-compose.
 You must provide agents.conf and a corresponding id_ecdsa/id_ecdsa.pub pair in /conf of the runner. This should be done through a volume in your docker-compose.yml.
 
 For local deployments:
+```bash
+./run.bash
+```
+or 
 ```
 version: "3"
 services:
