@@ -18,13 +18,18 @@ CONNECTOR=$(kubectl get svc connector --template=\"{{range.status.loadBalancer.i
 # Strip Quotes off of the string given, POSIX compliant
 CONNECTOR="${CONNECTOR#?}"; CONNECTOR="${CONNECTOR%?}";
 AGENTS=()
+AGENT_KEYFILES=()
 i=0
 while [[ $(yaml ${YML_FILE} agents[${i}]) ]]; do
     agent_ip=$(yaml ${YML_FILE} agents[${i}].host)
     agent_port=$(yaml ${YML_FILE} agents[${i}].port)
+    agent_keyfile=$(yaml ${YML_FILE} agents[${i}].keyfile)
     AGENTS+=("${agent_ip}:${agent_port}")
+    AGENT_KEYFILES+=(${agent_keyfile})
     i=${i}+1
 done
+
+echo $AGENT_KEYFILES
 
 export AGENTS="${AGENTS}"
 
@@ -49,16 +54,18 @@ done
 # Verify SSH connections to Agents and wait for them to be provisioned
 echo "Waiting for Agents to provision with Controller..."
 ITER=0
+idx=0
 for AGENT in "${AGENTS[@]}"; do
-  RESULT=$(ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" sudo iofog-agent status | grep 'Connection to Controller')
+  RESULT=$(ssh -i ${AGENT_KEYFILES[${idx}]} -o StrictHostKeyChecking=no "$AGENT" sudo iofog-agent status | grep 'Connection to Controller')
   while [[ "$RESULT" != *"ok"* ]]; do
     if [[ "$ITER" -gt 30 ]]; then exit 1; fi
-    RESULT=$(ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" sudo iofog-agent status | grep 'Connection to Controller')
+    RESULT=$(ssh -i ${AGENT_KEYFILES[${idx}]} -o StrictHostKeyChecking=no "$AGENT" sudo iofog-agent status | grep 'Connection to Controller')
     sleep 5
     ITER=$((ITER+1))
     echo -ne "."
   done
   echo "$AGENT provisioned successfully"
+  idx=${idx}+1
 done
 echo "---------- ----------------- ----------
 "
