@@ -1,4 +1,4 @@
-#!/usr/bin/env bats
+#!/usr/bin/env bash
 
 . functions.bash
 
@@ -17,21 +17,22 @@ CONTROLLER="${CONTROLLER#?}"; CONTROLLER="${CONTROLLER%?}";
 CONNECTOR=$(kubectl get svc connector --template=\"{{range.status.loadBalancer.ingress}}{{.ip}}{{end}}\" -n iofog --kubeconfig ${KUBE_CONFIG} )
 # Strip Quotes off of the string given, POSIX compliant
 CONNECTOR="${CONNECTOR#?}"; CONNECTOR="${CONNECTOR%?}";
-AGENTS=()
+AGENT_USERS=()
+AGENT_HOSTS=()
+AGENT_PORTS=()
 AGENT_KEYFILES=()
 i=0
 while [[ $(yaml ${YML_FILE} agents[${i}]) ]]; do
+    agent_user=$(yaml ${YML_FILE} agents[${i}].user)
     agent_ip=$(yaml ${YML_FILE} agents[${i}].host)
     agent_port=$(yaml ${YML_FILE} agents[${i}].port)
     agent_keyfile=$(yaml ${YML_FILE} agents[${i}].keyfile)
-    AGENTS+=("${agent_ip}:${agent_port}")
+    AGENT_USERS+=("${agent_user}")
+    AGENT_HOSTS+=("${agent_ip}")
+    AGENT_PORTS+=("${agent_port}")
     AGENT_KEYFILES+=(${agent_keyfile})
     i=${i}+1
 done
-
-echo $AGENT_KEYFILES
-
-export AGENTS="${AGENTS}"
 
 KUBE_CONF=$(yaml ${YML_FILE} controllers[0].kubeconfig)
 echo "----------   CONFIGURATION   ----------
@@ -42,7 +43,7 @@ $CONTROLLER
 $CONNECTOR
 
 [AGENTS]
-${AGENTS[@]}
+${AGENT_HOSTS[@]}
 "
 
 # Wait until services are up
@@ -55,34 +56,34 @@ done
 echo "Waiting for Agents to provision with Controller..."
 ITER=0
 idx=0
-for AGENT in "${AGENTS[@]}"; do
-  RESULT=$(ssh -i ${AGENT_KEYFILES[${idx}]} -o StrictHostKeyChecking=no "$AGENT" sudo iofog-agent status | grep 'Connection to Controller')
+for AGENT_HOST in "${AGENT_HOSTS[@]}"; do
+  RESULT=$(ssh -i ${AGENT_KEYFILES[${idx}]} -o StrictHostKeyChecking=no "${AGENT_USERS[${idx}]}"@"${AGENT_HOST}" -p "${AGENT_PORTS[${idx}]}" sudo iofog-agent status | grep 'Connection to Controller')
   while [[ "$RESULT" != *"ok"* ]]; do
     if [[ "$ITER" -gt 30 ]]; then exit 1; fi
-    RESULT=$(ssh -i ${AGENT_KEYFILES[${idx}]} -o StrictHostKeyChecking=no "$AGENT" sudo iofog-agent status | grep 'Connection to Controller')
+    RESULT=$(ssh -i ${AGENT_KEYFILES[${idx}]} -o StrictHostKeyChecking=no "${AGENT_USERS[${idx}]}"@"${AGENT_HOST}" -p "${AGENT_PORTS[${idx}]}" sudo iofog-agent status | grep 'Connection to Controller')
     sleep 5
     ITER=$((ITER+1))
     echo -ne "."
   done
-  echo "$AGENT provisioned successfully"
-  idx=${idx}+1
+  echo "${AGENT_HOST} provisioned successfully"
+  idx=$((idx+1))
 done
 echo "---------- ----------------- ----------
 "
 
 ERR=0
 echo "----------    SMOKE TESTS    ----------"
-pyresttest http://"$CONTROLLER" tests/smoke/controller.yml ; (( ERR |= "$?" ))
+pyresttest http://"$CONTROLLER":51121 tests/smoke/controller.yml ; (( ERR |= "$?" ))
 # TODO: (Serge) Enable Connector tests when Connector is stable
-#pyresttest http://"$CONNECTOR" tests/smoke/connector.yml ; (( ERR |= "$?" ))
-tests/smoke/agent.bats
+#pyresttest http://"$CONNECTOR":8080 tests/smoke/connector.yml ; (( ERR |= "$?" ))
+bats tests/smoke/agent.bats
 echo "---------- ----------------- ---------- "
 
 echo "---------- INTEGRATION TESTS ----------"
 # Spin up microservices
 for IDX in "${!AGENTS[@]}"; do
   export IDX
-  pyresttest http://"$CONTROLLER" tests/integration/deploy-weather.yml ; (( ERR |= "$?" ))
+  pyresttest http://"$CONTROLLER":51121 tests/integration/deploy-weather.yml ; (( ERR |= "$?" ))
 done
 
 # TODO: (Serge) Enable these tests when TestRunner container can hit Microservice endpoints
@@ -105,18 +106,18 @@ done
 # Teardown microservices
 for IDX in "${!AGENTS[@]}"; do
   export IDX
-  pyresttest http://"$CONTROLLER" tests/integration/destroy-weather.yml ; (( ERR |= "$?" ))
+  pyresttest http://"$CONTROLLER":51121 tests/integration/destroy-weather.yml ; (( ERR |= "$?" ))
 done
 echo "---------- ----------------- ----------
 "
 
 echo "---------- K4G TESTS ----------"
-tests/k4g/k4g.bats
+bats tests/k4g/k4g.bats
 echo "---------- ----------------- ----------
 "
 
 echo "---------- IOFOGCTL TESTS ----------"
-tests/iofogctl/iofogctl.bats
+bats tests/iofogctl/iofogctl.bats
 echo "---------- ----------------- ----------
 "
 exit 0

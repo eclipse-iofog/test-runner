@@ -75,5 +75,6 @@
 }
 
 @test "deploy test yaml" {
+  skip
   forIofogCTL "deploy ~/.iofog.yaml"
 }

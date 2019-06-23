@@ -43,7 +43,7 @@
       - group: "User"
       - url: "/api/v3/user/signup"
       - headers: {'Content-Type': 'application/json'}
-      - body: '{"firstName":"Serge","lastName":"Radinovich","email":"serge@edgeworx.io","password":"123pwer89iu23409i"}'
+      - body: '{"firstName":"User","lastName":"Domain","email":"user@domain.com","password":"#Bugs4Fun"}'
       - method: "POST"
       - expected_status: [201, 400]
 
