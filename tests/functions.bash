@@ -15,6 +15,7 @@ function forAgents(){
     CMD="$1"
     for AGENT in "${AGENTS[@]}"; do
         ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" "sudo $CMD"
+        [[ $? == 0 ]]
     done
 }
 

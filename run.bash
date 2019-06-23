@@ -8,15 +8,26 @@ if ! [[ ${YML_FILE} ]]; then
     YML_FILE="conf/environment.yml"
 fi
 
-CONTROLLER=$(yaml ${YML_FILE} controllers[0].kubecontrollerip)
-#CONNECTOR=$(yaml ${YML_FILE} connectors[0].connector_ip)
-CONNECTOR="TESTING STUFF"
-AGENTS=($(yaml ${YML_FILE} agents[0].host) $(yaml ${YML_FILE} agents[1].host))
-#i=0
-#until [[ $(yaml ${YML_FILE} agents[${i}]) ]]; do
-#    AGENTS+=$(yaml ${YML_FILE} agents[${i}].name)":"$(yaml ${YML_FILE} agents[${i}].port)
-#    i=${i} + 1
-#done
+KUBE_CONFIG=$(yaml ${YML_FILE} controllers[0].kubeconfig)
+
+CONTROLLER=$(kubectl get svc controller --template=\"{{range.status.loadBalancer.ingress}}{{.ip}}{{end}}\" -n iofog --kubeconfig ${KUBE_CONFIG} )
+# Strip Quotes off of the string given, POSIX compliant
+CONTROLLER="${CONTROLLER#?}"; CONTROLLER="${CONTROLLER%?}";
+
+CONNECTOR=$(kubectl get svc connector --template=\"{{range.status.loadBalancer.ingress}}{{.ip}}{{end}}\" -n iofog --kubeconfig ${KUBE_CONFIG} )
+# Strip Quotes off of the string given, POSIX compliant
+CONNECTOR="${CONNECTOR#?}"; CONNECTOR="${CONNECTOR%?}";
+AGENTS=()
+i=0
+while [[ $(yaml ${YML_FILE} agents[${i}]) ]]; do
+    agent_ip=$(yaml ${YML_FILE} agents[${i}].host)
+    agent_port=$(yaml ${YML_FILE} agents[${i}].port)
+    AGENTS+=("${agent_ip}:${agent_port}")
+    i=${i}+1
+done
+
+export AGENTS="${AGENTS}"
+echo "${AGENTS[@]}"
 
 KUBE_CONF=$(yaml ${YML_FILE} controllers[0].kubeconfig)
 echo "----------   CONFIGURATION   ----------
@@ -32,7 +43,7 @@ ${AGENTS[@]}
 
 # Wait until services are up
 echo "Waiting for Controller and Connector APIs..."
-for HOST in http://"$CONTROLLER"; do
+for HOST in http://"$CONTROLLER" http://"$CONNECTOR"; do
   waitFor "$HOST" 60
 done
 
@@ -99,7 +110,7 @@ echo "---------- ----------------- ----------
 "
 
 echo "---------- IOFOGCTL TESTS ----------"
-echo "Testing..."
+tests/iofogctl/iofogctl.bats
 echo "---------- ----------------- ----------
 "
 exit 0

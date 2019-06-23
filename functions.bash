@@ -22,13 +22,13 @@ function waitFor() {
 #
 # Read all Agents from config file
 #
-function importAgents() {
-    AGENTS=()
-    while IFS= read -r HOST
-    do
-        AGENTS+=("$HOST")
-    done < conf/agents.conf
-}
+#function importAgents() {
+#    AGENTS=()
+#    while IFS= read -r HOST
+#    do
+#        AGENTS+=("$HOST")
+#    done < conf/agents.conf
+#}
 
 function yaml() {
     hashdot=$(gem list hash_dot);

@@ -2,28 +2,78 @@
 
 . tests/functions.bash
 
-ioFog Unified Command Line Interface
+@test "Help" {
+  forIofogCTL "--help"
+}
 
-Usage:
-  iofogctl [command]
+@test "connect Help" {
+  forIofogCTL "connect --help"
+}
 
-Available Commands:
-  create      Create an ioFog resource
-  delete      Delete existing ioFog resources
-  deploy      Deploy ioFog stack on existing infrastructure
-  describe    Get detailed information of existing resources
-  get         Get information of existing resources
-  help        Help about any command
-  legacy      Execute commands using legacy CLI
-  logs        Get log contents of deployed resource
+@test "create Help" {
+  forIofogCTL "create --help"
+}
 
-Flags:
-      --config string      CLI configuration file (default is ~/.iofog.yaml)
-  -h, --help               help for iofogctl
-  -n, --namespace string   Namespace to execute respective command within (default "default")
+@test "delete Help" {
+  forIofogCTL "delete --help"
+}
 
-Use "iofogctl [command] --help" for more information about a command.
+@test "deploy Help" {
+  forIofogCTL "deploy --help"
+}
 
-@test "Test CLI Commands" {
-  forKubectl "get pods"
+@test "describe Help" {
+  forIofogCTL "describe --help"
+}
+
+@test "disconnect Help" {
+  forIofogCTL "disconnect --help"
+}
+
+@test "legacy Help" {
+  forIofogCTL "legacy --help"
+}
+
+@test "logs Help" {
+  forIofogCTL "logs --help"
+}
+
+@test "get Help" {
+  forIofogCTL "get --help"
+}
+
+@test "version" {
+  forIofogCTL "version"
+}
+
+@test "Get All" {
+  forIofogCTL "get all"
+}
+
+@test "Get Namespaces" {
+  forIofogCTL "get namespaces"
+}
+
+@test "Get Controllers" {
+  forIofogCTL "get controllers"
+}
+
+@test "Get Agents" {
+  forIofogCTL "get agents"
+}
+
+@test "Get Microservices" {
+  forIofogCTL "get microservices"
+}
+
+@test "create namespace" {
+  forIofogCTL "create -n iofogctlTest"
+}
+
+@test "delete namespace" {
+  forIofogCTL "delete -n iofogctlTest"
+}
+
+@test "deploy test yaml" {
+  forIofogCTL "deploy ~/.iofog.yaml"
 }
