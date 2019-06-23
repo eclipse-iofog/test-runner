@@ -27,7 +27,6 @@ while [[ $(yaml ${YML_FILE} agents[${i}]) ]]; do
 done
 
 export AGENTS="${AGENTS}"
-echo "${AGENTS[@]}"
 
 KUBE_CONF=$(yaml ${YML_FILE} controllers[0].kubeconfig)
 echo "----------   CONFIGURATION   ----------
@@ -43,7 +42,7 @@ ${AGENTS[@]}
 
 # Wait until services are up
 echo "Waiting for Controller and Connector APIs..."
-for HOST in http://"$CONTROLLER" http://"$CONNECTOR"; do
+for HOST in http://"$CONTROLLER":51121 http://"$CONNECTOR":8080; do
   waitFor "$HOST" 60
 done
 
