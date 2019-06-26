@@ -2,39 +2,33 @@
 
 . functions.bash
 
-# Read Controller, Connector, and Agents from config files
-YML_FILE=$1
-if ! [[ ${YML_FILE} ]]; then
-    YML_FILE="conf/environment.yml"
+NAMESPACE="${NAMESPACE:-iofog}"
+
+if [[ CONTEXT=$(kubectl config current-context) ]]; then
+  echo "Found kubernetes context, using ${CONTEXT} to retrieve configuration..."
+  CONTROLLER_URL=$(kubectl -n "${NAMESPACE}" get svc controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
+  CONNECTOR_URL=$(kubectl -n "${NAMESPACE}" get svc connector -o jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
 fi
 
-KUBE_CONFIG=$(yaml ${YML_FILE} controllers[0].kubeconfig)
+CONTROLLER_HOST="http://${CONTROLLER_URL}/api/v3"
+CONTROLLER_EMAIL="${CONTROLLER_EMAIL:-user@domain.com}"
+CONTROLLER_PASSWORD="${CONTROLLER_PASSWORD:-#Bugs4Fun}"
 
-CONTROLLER=$(kubectl get svc controller --template=\"{{range.status.loadBalancer.ingress}}{{.ip}}{{end}}\" -n iofog --kubeconfig ${KUBE_CONFIG} )
-# Strip Quotes off of the string given, POSIX compliant
-CONTROLLER="${CONTROLLER#?}"; CONTROLLER="${CONTROLLER%?}";
+CONNECTOR_HOST="http://${CONNECTOR_URL}/api/v2"
 
-CONNECTOR=$(kubectl get svc connector --template=\"{{range.status.loadBalancer.ingress}}{{.ip}}{{end}}\" -n iofog --kubeconfig ${KUBE_CONFIG} )
-# Strip Quotes off of the string given, POSIX compliant
-CONNECTOR="${CONNECTOR#?}"; CONNECTOR="${CONNECTOR%?}";
-AGENT_USERS=()
-AGENT_HOSTS=()
-AGENT_PORTS=()
-AGENT_KEYFILES=()
-i=0
-while [[ $(yaml ${YML_FILE} agents[${i}]) ]]; do
-    agent_user=$(yaml ${YML_FILE} agents[${i}].user)
-    agent_ip=$(yaml ${YML_FILE} agents[${i}].host)
-    agent_port=$(yaml ${YML_FILE} agents[${i}].port)
-    agent_keyfile=$(yaml ${YML_FILE} agents[${i}].keyfile)
-    AGENT_USERS+=("${agent_user}")
-    AGENT_HOSTS+=("${agent_ip}")
-    AGENT_PORTS+=("${agent_port}")
-    AGENT_KEYFILES+=(${agent_keyfile})
-    i=${i}+1
-done
+# Agents are comma separated URI
+#
+# Example:
+#     root@1.2.3.4:6451,user@6.7.8.9
+#
+# Note that you need to mount appropriate ssh keys to /root/.ssh
+IFS=',' read -r -a AGENTS_ARR <<< "${AGENTS}"
 
-KUBE_CONF=$(yaml ${YML_FILE} controllers[0].kubeconfig)
+echo "AGENTS: $AGENTS"
+echo "AGENTS_ARR: ${AGENTS_ARR}"
+echo "AGENTS_ARR: ${AGENTS_ARR[@]}"
+echo "AGENTS_ARR_LEN: ${#AGENTS_ARR[@]}"
+
 echo "----------   CONFIGURATION   ----------
 [CONTROLLER]
 $CONTROLLER
@@ -43,31 +37,47 @@ $CONTROLLER
 $CONNECTOR
 
 [AGENTS]
-${AGENT_HOSTS[@]}
+${AGENTS_ARR[@]}
 "
 
-# Wait until services are up
-echo "Waiting for Controller and Connector APIs..."
-for HOST in http://"$CONTROLLER":51121 http://"$CONNECTOR":8080; do
-  waitFor "$HOST" 60
+
+function waitForController() {
+  while true; do
+    STATUS=$(curl --request GET --url "${CONTROLLER_HOST}/status" 2>/dev/null | jq -r ".status")
+    [[ "${STATUS}" == "online" ]] && break || echo "Waiting for Controller ${CONTROLLER_HOST}..."
+    sleep 2
+  done
+  echo "Controller ${CONTROLLER_HOST} is ready."
+}
+
+function waitForConnector() {
+  while true; do
+    STATUS=$(curl --request POST --url "${CONNECTOR_HOST}/status" \
+                  --header 'Content-Type: application/x-www-form-urlencoded' --data mappingid=all 2>/dev/null \
+             | jq -r '.status')
+    [[ "${STATUS}" == "running" ]] && break || echo "Waiting for Connector..."
+    sleep 2
+  done
+  echo "Connector ${CONNECTOR_HOST} is ready."
+}
+
+#waitForController
+#waitForConnector
+
+
+echo "Waiting for Agents to provision with Controller..."
+
+for AGENT in "${AGENTS_ARR[@]}"; do
+  USERNAME_HOST="${AGENT%:*}"
+  PORT="${AGENT##*:}"
+  while true; do
+    STATUS=$(ssh -o StrictHostKeyChecking=no "${USERNAME_HOST}" -p "${PORT}" sudo iofog-agent status | grep 'Connection to Controller')
+    [[ "${STATUS}" == *"ok"* ]] && break || echo "Waiting for Agent ${AGENT}..."
+    sleep 2
+  done
+  echo "Agent ${AGENT_HOST} is ready."
 done
 
-# Verify SSH connections to Agents and wait for them to be provisioned
-echo "Waiting for Agents to provision with Controller..."
-ITER=0
-idx=0
-for AGENT_HOST in "${AGENT_HOSTS[@]}"; do
-  RESULT=$(ssh -i ${AGENT_KEYFILES[${idx}]} -o StrictHostKeyChecking=no "${AGENT_USERS[${idx}]}"@"${AGENT_HOST}" -p "${AGENT_PORTS[${idx}]}" sudo iofog-agent status | grep 'Connection to Controller')
-  while [[ "$RESULT" != *"ok"* ]]; do
-    if [[ "$ITER" -gt 30 ]]; then exit 1; fi
-    RESULT=$(ssh -i ${AGENT_KEYFILES[${idx}]} -o StrictHostKeyChecking=no "${AGENT_USERS[${idx}]}"@"${AGENT_HOST}" -p "${AGENT_PORTS[${idx}]}" sudo iofog-agent status | grep 'Connection to Controller')
-    sleep 5
-    ITER=$((ITER+1))
-    echo -ne "."
-  done
-  echo "${AGENT_HOST} provisioned successfully"
-  idx=$((idx+1))
-done
 echo "---------- ----------------- ----------
 "
 

@@ -7,13 +7,12 @@ FROM python:3
 # Install our deps
 RUN apt-get update -qq && apt-get install -y \
     sudo \
-    python-pycurl \
-    vim \
     jq \
+    python-pycurl \
     rubygems
 
 # Set the Kubernetes version as found in the UCP Dashboard or API
-RUN k8sversion=v1.11.5 && curl -LO https://storage.googleapis.com/kubernetes-release/release/$k8sversion/bin/linux/amd64/kubectl && \
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.11.5/bin/linux/amd64/kubectl && \
     chmod +x ./kubectl && mv ./kubectl /usr/local/bin/kubectl
 
 RUN git clone https://github.com/sstephenson/bats.git && cd bats && ./install.sh /usr/local
@@ -27,4 +26,4 @@ COPY run.bash /
 COPY tests /tests/
 
 # Run our tests
-CMD /run.bash
+ENTRYPOINT ["/bin/bash", "-c", "/run.bash"]

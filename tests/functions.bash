@@ -22,8 +22,7 @@ function forAgents(){
 # Kubectl with status comparison
 function forKubectl(){
     CMD="$1"
-    KUBE_CONF="conf/kube.conf"
-    result=$(kubectl ${CMD} --kubeconfig ${KUBE_CONF})
+    result=$(kubectl ${CMD})
     [[ $? == 0 ]]
 }
 
@@ -49,8 +48,7 @@ function forIofogCTLCompare(){
 # Kubectl with status comparison
 function NegativeKubeCtl(){
     CMD="$1"
-    KUBE_CONF="conf/kube.conf"
-    result=$(kubectl ${CMD} --kubeconfig ${KUBE_CONF})
+    result=$(kubectl ${CMD})
     [[ $? > 0 ]]
 }
 
@@ -58,8 +56,7 @@ function NegativeKubeCtl(){
 function forKubectlOutputContains(){
     CMD="$1"
     SUBSTR="$2"
-    KUBE_CONF="./conf/kube.conf"
-    result=$(kubectl "$CMD" --kubeconfig "$KUBE_CONF")
+    result=$(kubectl "$CMD")
     [[ ${result} == *"$SUBSTR"* ]]
 }
 
