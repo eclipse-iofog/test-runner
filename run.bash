@@ -34,7 +34,6 @@ while [[ $(yaml ${YML_FILE} agents[${i}]) ]]; do
     i=${i}+1
 done
 
-KUBE_CONF=$(yaml ${YML_FILE} controllers[0].kubeconfig)
 echo "----------   CONFIGURATION   ----------
 [CONTROLLER]
 $CONTROLLER
@@ -43,7 +42,7 @@ $CONTROLLER
 $CONNECTOR
 
 [AGENTS]
-${AGENT_HOSTS[@]}
+${AGENT_HOSTS[@]} ${AGENT_PORTS[@]}
 "
 
 # Wait until services are up
@@ -57,10 +56,11 @@ echo "Waiting for Agents to provision with Controller..."
 ITER=0
 idx=0
 for AGENT_HOST in "${AGENT_HOSTS[@]}"; do
-  RESULT=$(ssh -i ${AGENT_KEYFILES[${idx}]} -o StrictHostKeyChecking=no "${AGENT_USERS[${idx}]}"@"${AGENT_HOST}" -p "${AGENT_PORTS[${idx}]}" sudo iofog-agent status | grep 'Connection to Controller')
+  echo "ssh -i ${AGENT_KEYFILES[${idx}]} -o StrictHostKeyChecking=no ${AGENT_USERS[${idx}]}@${AGENT_HOST} -p ${AGENT_PORTS[${idx}]} sudo iofog-agent status | grep 'Connection to Controller'"
+  RESULT=$(ssh -i "${AGENT_KEYFILES[${idx}]}" -o StrictHostKeyChecking=no "${AGENT_USERS[${idx}]}"@"${AGENT_HOST}" -p ${AGENT_PORTS[${idx}]} sudo iofog-agent status | grep 'Connection to Controller')
   while [[ "$RESULT" != *"ok"* ]]; do
     if [[ "$ITER" -gt 30 ]]; then exit 1; fi
-    RESULT=$(ssh -i ${AGENT_KEYFILES[${idx}]} -o StrictHostKeyChecking=no "${AGENT_USERS[${idx}]}"@"${AGENT_HOST}" -p "${AGENT_PORTS[${idx}]}" sudo iofog-agent status | grep 'Connection to Controller')
+    RESULT=$(ssh -i "${AGENT_KEYFILES[${idx}]}" -o StrictHostKeyChecking=no "${AGENT_USERS[${idx}]}@${AGENT_HOST}" -p ${AGENT_PORTS[${idx}]} sudo iofog-agent status | grep 'Connection to Controller')
     sleep 5
     ITER=$((ITER+1))
     echo -ne "."
@@ -81,7 +81,7 @@ echo "---------- ----------------- ---------- "
 
 echo "---------- INTEGRATION TESTS ----------"
 # Spin up microservices
-for IDX in "${!AGENTS[@]}"; do
+for IDX in "${AGENT_HOSTS[@]}"; do
   export IDX
   pyresttest http://"$CONTROLLER":51121 tests/integration/deploy-weather.yml ; (( ERR |= "$?" ))
 done
@@ -104,7 +104,7 @@ done
 #done
 
 # Teardown microservices
-for IDX in "${!AGENTS[@]}"; do
+for IDX in "${!AGENT_HOSTS[@]}"; do
   export IDX
   pyresttest http://"$CONTROLLER":51121 tests/integration/destroy-weather.yml ; (( ERR |= "$?" ))
 done
