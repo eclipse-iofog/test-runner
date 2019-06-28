@@ -1,20 +1,24 @@
 #!/usr/bin/env bash
 
-. ./functions.bash
-
 function forAgentsOutputContains(){
-    CMD="$1"
-    SUBSTR="$2"
+    local CMD="$1"
+    local SUBSTR="$2"
     for AGENT in "${AGENTS[@]}"; do
-        RESULT=$(ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" "sudo $CMD")
+        local USERNAME_HOST="${AGENT%:*}"
+        local PORT="$(echo "${AGENT}" | cut -d':' -s -f2)"
+        local PORT="${PORT:-22}"
+        RESULT=$(ssh -o StrictHostKeyChecking=no "${USERNAME_HOST}" -p "${PORT}" "sudo $CMD")
         [[ "$RESULT" == *"$SUBSTR"* ]]
     done
 }
 
 function forAgents(){
-    CMD="$1"
+    local CMD="$1"
     for AGENT in "${AGENTS[@]}"; do
-        ssh -i conf/id_ecdsa -o StrictHostKeyChecking=no "$AGENT" "sudo $CMD"
+        local USERNAME_HOST="${AGENT%:*}"
+        local PORT="$(echo "${AGENT}" | cut -d':' -s -f2)"
+        local PORT="${PORT:-22}"
+        ssh -o StrictHostKeyChecking=no "${USERNAME_HOST}" -p "${PORT}" "sudo $CMD"
         [[ $? == 0 ]]
     done
 }
