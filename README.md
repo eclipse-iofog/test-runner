@@ -1,5 +1,17 @@
 # Test Runner
 
+Agents are comma separated URI
+
+Example:
+    root@1.2.3.4:6451,user@6.7.8.9
+
+Note that you need to mount appropriate ssh keys to /root/.ssh
+
+docker run --rm --name test-runner -v ~/.ssh/google_compute_engine:/root/.ssh/id_rsa --network host -e AGENTS="lkrcal@34.66.151.77,lkrcal@35.222.182.230" gcr.io/focal-freedom-236620/test-runner:lkrcal
+
+
+ ~/.ssh/id_dsa, ~/.ssh/id_ecdsa, ~/.ssh/id_ed25519 and ~/.ssh/id_rsa
+
 ## Usage
 
 It is recommended you run Test Runner using docker-compose.
