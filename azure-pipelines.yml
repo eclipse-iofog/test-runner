@@ -18,7 +18,7 @@ pr:
 
 variables:
   repository: 'focal-freedom-236620/test-runner'
-  buildTag: $(Build.BuildNumber)
+  buildTag: $(Build.BuildId)
 
 jobs:
   - job: TestRunner
@@ -34,7 +34,7 @@ jobs:
           command: 'build'
           Dockerfile: "Dockerfile"
           tags: |
-            $(Build.BuildNumber)
+            $(buildTag)
             latest
 
       - task: Docker@2
@@ -45,16 +45,15 @@ jobs:
           command: 'push'
           Dockerfile: "Dockerfile"
           tags: |
-            $(Build.BuildNumber)
+            $(buildTag)
             latest
 
       - script: |
-          echo "cat gcr.io/${REPOSITORY}:$(Build.BuildNumber) > $(Build.ArtifactStagingDirectory)/docker-image.txt"
-          cat "gcr.io/${REPOSITORY}:$(Build.BuildNumber)" > $(Build.ArtifactStagingDirectory)/docker-image.txt
+          echo "gcr.io/${REPOSITORY}:${BUILDTAG}" > $(Build.ArtifactStagingDirectory)/docker-image.txt
         displayName: 'Save Docker image name to artifact'
 
       - task: PublishPipelineArtifact@0
-        displayName: 'Save Docker image name to artifact'
+        displayName: 'Publish Docker image name artifact'
         inputs:
           artifactName: 'docker-image.txt'
           targetPath: $(Build.ArtifactStagingDirectory)/docker-image.txt
