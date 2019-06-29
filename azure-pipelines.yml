@@ -1,86 +1,58 @@
 trigger:
   tags:
     include:
-      - v.*
+      - v*
   branches:
     include:
       - develop
       - master
-      - release
+      - release*
   paths:
     exclude:
       - README.md
 
 pr:
   - master
+  - develop
 
 variables:
   repository: 'focal-freedom-236620/test-runner'
-  type: $(Build.SourceBranchName)
-  commit: $(Build.SourceVersion)
+  buildTag: $(Build.BuildNumber)
 
 jobs:
-  - job: TriggerOtherJobs
-    dependsOn: TestRunner
-    pool: server
-    variables:
-      tag: $[ dependencies.TestRunner.outputs['setVarStep.tag'] ]
-
-    steps:
-
-      - task: InvokeRESTAPI@1
-        displayName: 'Trigger platform job'
-        inputs:
-          connectionType: 'connectedServiceName'
-          serviceConnection: 'Pipelines'
-          method: 'POST'
-          urlSuffix: '/edgeworx/_apis/build/builds?api-version=5.0'
-          body: "{\"Parameters\":\"{\\\"images.runner\\\": \\\"gcr.io/$(repository):$(tag)\\\"}\", \"Definition\":{\"id\":5}}"
-          waitForCompletion: 'false'
-
-      - task: InvokeRESTAPI@1
-        displayName: 'Trigger demo job'
-        inputs:
-          connectionType: 'connectedServiceName'
-          serviceConnection: 'Pipelines'
-          method: 'POST'
-          urlSuffix: '/edgeworx/_apis/build/builds?api-version=5.0'
-          body: "{\"SourceBranch\": \"$(type)\", \"Parameters\":\"{\\\"images.runner\\\": \\\"gcr.io/$(repository):$(tag)\\\"}\", \"Definition\":{\"id\":13}}"
-          waitForCompletion: 'false'
-
   - job: TestRunner
     pool:
       vmImage: 'Ubuntu-16.04'
 
     steps:
-
-      - bash: |
-          echo 'setting commit tag'
-          commit=$(git rev-parse --short=5 HEAD)
-          echo "##vso[task.setvariable variable=commit]$commit"
-          echo "##vso[task.setvariable variable=primaryTag]latest"
-          echo "##vso[task.setvariable variable=tag;isOutput=true]$commit"
-        displayName: 'Set image tag variables'
-        name: setVarStep
-      
       - task: Docker@2
-        displayName: 'Build docker'
+        displayName: 'Docker build'
         inputs:
           containerRegistry: 'Edgeworx GCP'
           repository: $(repository)
           command: 'build'
           Dockerfile: "Dockerfile"
           tags: |
-            $(commit)
-            $(primaryTag)
+            $(Build.BuildNumber)
+            latest
 
       - task: Docker@2
-        displayName: 'Push docker'
+        displayName: 'Docker push'
         inputs:
           containerRegistry: 'Edgeworx GCP'
           repository: $(repository)
           command: 'push'
           Dockerfile: "Dockerfile"
           tags: |
-            $(commit)
-            $(primaryTag)
+            $(Build.BuildNumber)
+            latest
+
+      - script: |
+          echo "cat gcr.io/${REPOSITORY}:$(Build.BuildNumber) > $(Build.ArtifactStagingDirectory)/docker-image.txt"
+          cat "gcr.io/${REPOSITORY}:$(Build.BuildNumber)" > $(Build.ArtifactStagingDirectory)/docker-image.txt
+        displayName: "Save Docker image name to artifact"
+
+      - task: PublishPipelineArtifact@0
+          inputs:
+            artifactName: 'docker-image.txt'
+            targetPath: $(Build.ArtifactStagingDirectory)/docker-image.txt
