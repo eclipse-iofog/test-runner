@@ -28,12 +28,31 @@
         - 'iofogUUID': {'jsonpath_mini': {template: "fogs.$idx.uuid"}}
 
 - test:
+      - name: "Create flow if doesn't exist"
+      - group: "Deploy Weather Microservice"
+      - url: "/api/v3/flow"
+      - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
+      - method: "POST"
+      - body: {template: '{"name": "Test Flow", "isActivated":true}'}
+      - expected_status: [200, 500]
+
+- test:
+      - name: "Get flows"
+      - group: "Deploy Weather Microservice"
+      - url: "/api/v3/flow"
+      - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
+      - method: "GET"
+      - expected_status: [200]
+      - extract_binds:
+        - 'flowID': {'jmespath': 'flows[?name=="Test Flow"].id[0]'}
+
+- test:
       - name: "Create microservice"
       - group: "Deploy Weather Microservice"
       - url: "/api/v3/microservices"
       - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
       - generator_binds: {idx: agentIdx}
-      - body: {template: '{"name": "JSON Rest API $idx", "catalogItemId": 7, "flowId": 1, "iofogUuid": "$iofogUUID", "config": "{\"buffersize\":3,\"contentdataencoding\":\"utf8\",\"contextdataencoding\":\"utf8\",\"outputfields\":{\"publisher\":\"source\",\"contentdata\":\"temperature\",\"timestamp\":\"time\"}}", "ports": [{"internal": 80,"external": 5555}]}'}
+      - body: {template: '{"name": "JSON Rest API $idx", "catalogItemId": 7, "flowId": $flowID, "iofogUuid": "$iofogUUID", "config": "{\"buffersize\":3,\"contentdataencoding\":\"utf8\",\"contextdataencoding\":\"utf8\",\"outputfields\":{\"publisher\":\"source\",\"contentdata\":\"temperature\",\"timestamp\":\"time\"}}", "ports": [{"internal": 80,"external": 5555}]}'}
       - method: "POST"
       - expected_status: [201]
       - extract_binds:
@@ -45,7 +64,7 @@
       - url: "/api/v3/microservices"
       - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
       - generator_binds: {idx: agentIdx}
-      - body: {template: '{"name": "Weather Microservice $idx", "catalogItemId": 6, "flowId": 1, "iofogUuid": "$iofogUUID", "config": "{\"citycode\":\"5391997\",\"apikey\":\"6141811a6136148a00133488eadff0fb\",\"frequency\":1000}", "routes": ["$firstId"]}'}
+      - body: {template: '{"name": "Weather Microservice $idx", "catalogItemId": 6, "flowId": $flowID, "iofogUuid": "$iofogUUID", "config": "{\"citycode\":\"5391997\",\"apikey\":\"6141811a6136148a00133488eadff0fb\",\"frequency\":1000}", "routes": ["$firstId"]}'}
       - method: "POST"
       - expected_status: [201]
       - extract_binds:
