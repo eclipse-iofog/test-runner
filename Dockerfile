@@ -18,7 +18,7 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.11.5/b
 RUN git clone https://github.com/sstephenson/bats.git && cd bats && ./install.sh /usr/local
 
 # Install the pyresttest and deps (the basis of all our smoke tests)
-RUN pip install pyresttest jsonschema future shyaml
+RUN pip install pyresttest jsonschema future shyaml jmespath
 
 # Copy over all the files we need
 COPY run.bash /

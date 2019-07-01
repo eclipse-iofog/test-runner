@@ -138,6 +138,7 @@ function testSuiteBasicIntegration() {
   if [[ ${#AGENTS_ARR[@]} -gt 0 ]] && [[ -n "${CONTROLLER_HOST}" ]] && [[ -n "${CONTROLLER_EMAIL}" ]] && [[ -n "${CONTROLLER_PASSWORD}" ]]; then
 
     echo "--- Running BASIC INTEGRATION TEST SUITE ---"
+    SUITE_BASIC_INTEGRATION_STATUS=0
 
     # Spin up microservices
     for IDX in "${!AGENTS_ARR[@]}"; do
@@ -145,7 +146,6 @@ function testSuiteBasicIntegration() {
       pyresttest http://"${CONTROLLER}" tests/integration/deploy-weather.yml
       if [[ "$?" -gt 0 ]]; then
         SUITE_BASIC_INTEGRATION_STATUS=1
-        return;
       fi
     done
 
@@ -171,11 +171,9 @@ function testSuiteBasicIntegration() {
       pyresttest http://"${CONTROLLER}" tests/integration/destroy-weather.yml
        if [[ "$?" -gt 0 ]]; then
         SUITE_BASIC_INTEGRATION_STATUS=2
-        return;
       fi
     done
 
-    SUITE_BASIC_INTEGRATION_STATUS=0
   else
     echo "--- Skipping BASIC INTEGRATION TEST SUITE ---"
     echo "Insufficient configuration to run this test suite!"

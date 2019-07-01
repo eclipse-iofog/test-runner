@@ -34,7 +34,7 @@
       - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
       - method: "POST"
       - body: {template: '{"name": "Test Flow", "isActivated":true}'}
-      - expected_status: [200, 500]
+      - expected_status: [200, 201, 500]
 
 - test:
       - name: "Get flows"
@@ -44,7 +44,7 @@
       - method: "GET"
       - expected_status: [200]
       - extract_binds:
-        - 'flowID': {'jmespath': 'flows[?name=="Test Flow"].id[0]'}
+        - 'flowID': {'jmespath': "flows[?name=='Test Flow'].id | [0]"}
 
 - test:
       - name: "Create microservice"
