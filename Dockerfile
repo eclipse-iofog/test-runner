@@ -25,4 +25,4 @@ COPY run.bash /
 COPY tests /tests/
 
 # Run our tests
-ENTRYPOINT ["/bin/bash", "-c", "/run.bash"]
+ENTRYPOINT ["/bin/sh", "-c", "/run.bash"]
