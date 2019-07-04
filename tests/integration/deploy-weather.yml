@@ -4,13 +4,16 @@
     - timeout: 600000 # 10 seconds
     - generators:
         - 'agentIdx': {type: 'env_variable', variable_name: 'IDX'}
+        - 'userEmail': {type: 'env_variable', variable_name: 'CONTROLLER_EMAIL'}
+        - 'userPassword': {type: 'env_variable', variable_name: 'CONTROLLER_PASSWORD'}
 
 - test:
       - name: "Login"
       - group: "Deploy Weather Microservice"
       - url: "/api/v3/user/login"
       - headers: {'Content-Type': 'application/json'}
-      - body: '{"email":"user@domain.com","password":"#Bugs4Fun"}'
+      - generator_binds: {userEmail: userEmail, userPassword: userPassword}
+      - body: {template: '{"email":"$userEmail","password":"$userPassword"}'}
       - method: "POST"
       - expected_status: [200]
       - extract_binds:

@@ -1,14 +1,18 @@
 ---
--  config:
-    - testset: "Destroying Weather App to Iofog"
-    - timeout: 600000 # 10 seconds
+- config:
+  - testset: "Destroying Weather App to Iofog"
+  - timeout: 600000 # 10 seconds
+  - generators:
+     - 'userEmail': {type: 'env_variable', variable_name: 'CONTROLLER_EMAIL'}
+     - 'userPassword': {type: 'env_variable', variable_name: 'CONTROLLER_PASSWORD'}
 
 - test:
       - name: "Login"
       - group: "Destroy Weather Microservice"
       - url: "/api/v3/user/login"
       - headers: {'Content-Type': 'application/json'}
-      - body: '{"email":"user@domain.com","password":"#Bugs4Fun"}'
+      - generator_binds: {userEmail: userEmail, userPassword: userPassword}
+      - body: {template: '{"email":"$userEmail","password":"$userPassword"}'}
       - method: "POST"
       - expected_status: [200]
       - extract_binds:

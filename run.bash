@@ -7,8 +7,8 @@ function loadConfiguration() {
   CONTROLLER="${CONTROLLER:-}"
   CONNECTOR="${CONNECTOR:-}"
   CONTROLLER_HOST=""
-  CONTROLLER_EMAIL=""
-  CONTROLLER_PASSWORD=""
+  CONTROLLER_EMAIL="${CONTROLLER_EMAIL:-user@domain.com}"
+  CONTROLLER_PASSWORD="${CONTROLLER_PASSWORD:-#Bugs4Fun}"
   CONNECTOR_HOST=""
   AGENTS="${AGENTS:-}"
   AGENTS_ARR=()
@@ -23,8 +23,6 @@ function loadConfiguration() {
 
   if [[ -n "${CONTROLLER}" ]]; then
     CONTROLLER_HOST="http://${CONTROLLER}/api/v3"
-    CONTROLLER_EMAIL="${CONTROLLER_EMAIL:-user@domain.com}"
-    CONTROLLER_PASSWORD="${CONTROLLER_PASSWORD:-#Bugs4Fun}"
   fi
 
   if [[ -n "${CONNECTOR}" ]]; then
@@ -137,6 +135,8 @@ function testSuiteAgentsSmoke() {
 function testSuiteBasicIntegration() {
   if [[ ${#AGENTS_ARR[@]} -gt 0 ]] && [[ -n "${CONTROLLER_HOST}" ]] && [[ -n "${CONTROLLER_EMAIL}" ]] && [[ -n "${CONTROLLER_PASSWORD}" ]]; then
 
+    export CONTROLLER_EMAIL
+    export CONTROLLER_PASSWORD
     echo "--- Running BASIC INTEGRATION TEST SUITE ---"
     SUITE_BASIC_INTEGRATION_STATUS=0
 
