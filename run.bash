@@ -4,6 +4,7 @@ set -o noclobber -o nounset
 
 TESTS=( "integration" "smoke" "iofogctl" "k4g" )
 TEST_COUNT=0
+FAILURES=0
 SKIPPED=0
 
 function loadConfiguration() {
@@ -108,6 +109,7 @@ function testSuiteControllerSmoke() {
   else
     echo "--- Skipping CONTROLLER SMOKE TEST SUITE ---"
     echo "Insufficient configuration to run this test suite!"
+    SKIPPED+=1
     SUITE_CONTROLLER_SMOKE_STATUS="SKIPPED"
   fi
 }
@@ -120,6 +122,7 @@ function testSuiteConnectorSmoke() {
   else
     echo "--- Skipping CONNECTOR SMOKE TEST SUITE ---"
     echo "Insufficient configuration to run this test suite!"
+    SKIPPED+=1
     SUITE_CONNECTOR_SMOKE_STATUS="SKIPPED"
   fi
 }
@@ -132,6 +135,7 @@ function testSuiteAgentsSmoke() {
   else
     echo "--- Skipping AGENT SMOKE TEST SUITE ---"
     echo "Insufficient configuration to run this test suite!"
+    SKIPPED+=1
     SUITE_AGENT_SMOKE_STATUS="SKIPPED"
   fi
 }
@@ -192,7 +196,7 @@ function buildXML()
     idx=0
 
     echo '<?xml version='1.0' encoding='UTF-8'?>' >> "$MY_XML"
-    echo "<testsuites skipped=${SKIPPED} errors=0 failures=${FAILURES} tests=${TOTAL_TESTS}>" >> "${MY_XML}"
+    echo "<testsuites skipped=${SKIPPED} errors=0 failures=${FAILURES} tests=${TEST_COUNT}>" >> "${MY_XML}"
     for test_name in ${TESTS[@]}; do
         echo "<testsuite name=${test_name} id=${idx} skipped=0 errors=0 failures=0 tests=1>" >> "${MY_XML}"
         idx+=1
@@ -213,19 +217,16 @@ testSuiteBasicIntegration
 # TODO: (Serge) Enable Connector tests when Connector is stable
 # testSuiteConnectorSmoke
 echo "--- Skipping CONNECTOR SMOKE TEST SUITE ---"
-SKIPPED+=1
 SUITE_CONNECTOR_SMOKE_STATUS="SKIPPED"
 
 # TODO: (lkrcal) Enable these tests when ready for platform pipeline
 #bats tests/k4g/k4g.bats
 echo "--- Skipping KUBERNETES TEST SUITE ---"
-SKIPPED+=1
 SUITE_KUBERNETES_STATUS="SKIPPED"
 
 # TODO: (lkrcal) Enable these tests when ready for platform pipeline
 #bats tests/iofogctl/iofogctl.bats
 echo "--- Skipping IOFOGCTL TEST SUITE ---"
-SKIPPED+=1
 SUITE_IOFOGCTL_STATUS="SKIPPED"
 
 
