@@ -2,6 +2,10 @@
 
 set -o noclobber -o nounset
 
+TESTS=( "integration" "smoke" "iofogctl" "k4g" )
+TEST_COUNT=0
+SKIPPED=0
+
 function loadConfiguration() {
   NAMESPACE="${NAMESPACE:-iofog}"
   CONTROLLER="${CONTROLLER:-}"
@@ -181,6 +185,21 @@ function testSuiteBasicIntegration() {
   fi
 }
 
+function buildXML()
+{
+    MY_XML="TEST-RESULTS.xml"
+    touch "${MY_XML}"
+    idx=0
+
+    echo '<?xml version='1.0' encoding='UTF-8'?>' >> "$MY_XML"
+    echo "<testsuites skipped=${SKIPPED} errors=0 failures=${FAILURES} tests=${TOTAL_TESTS}>" >> "${MY_XML}"
+    for test_name in ${TESTS[@]}; do
+        echo "<testsuite name=${test_name} id=${idx} skipped=0 errors=0 failures=0 tests=1>" >> "${MY_XML}"
+        idx+=1
+        echo "</testsuite>" >> "${MY_XML}"
+    done
+    echo "</testsuites>" >> "${MY_XML}"
+}
 
 
 loadConfiguration
@@ -194,16 +213,19 @@ testSuiteBasicIntegration
 # TODO: (Serge) Enable Connector tests when Connector is stable
 # testSuiteConnectorSmoke
 echo "--- Skipping CONNECTOR SMOKE TEST SUITE ---"
+SKIPPED+=1
 SUITE_CONNECTOR_SMOKE_STATUS="SKIPPED"
 
 # TODO: (lkrcal) Enable these tests when ready for platform pipeline
 #bats tests/k4g/k4g.bats
 echo "--- Skipping KUBERNETES TEST SUITE ---"
+SKIPPED+=1
 SUITE_KUBERNETES_STATUS="SKIPPED"
 
 # TODO: (lkrcal) Enable these tests when ready for platform pipeline
 #bats tests/iofogctl/iofogctl.bats
 echo "--- Skipping IOFOGCTL TEST SUITE ---"
+SKIPPED+=1
 SUITE_IOFOGCTL_STATUS="SKIPPED"
 
 
@@ -224,8 +246,10 @@ if [[ "${SUITE_CONTROLLER_SMOKE_STATUS}" =~ ^(0|SKIPPED)$ ]] && \
    [[ "${SUITE_KUBERNETES_STATUS}" =~ ^(0|SKIPPED)$ ]] && \
    [[ "${SUITE_IOFOGCTL_STATUS}" =~ ^(0|SKIPPED)$ ]]; then
   echo "--- SUCCESS ---"
+  buildXML
   exit 0
 else
   echo "--- SOME TESTS FAILED ---"
+  buildXML
   exit 1
 fi
