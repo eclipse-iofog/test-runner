@@ -6,6 +6,10 @@
   forIofogCTL "--help"
 }
 
+@test "Help w/o flag" {
+  forIofogCTL "help"
+}
+
 @test "connect Help" {
   forIofogCTL "connect --help"
 }
@@ -24,6 +28,10 @@
 
 @test "describe Help" {
   forIofogCTL "describe --help"
+}
+
+@test "connect Help" {
+  forIofogCTL "connect --help"
 }
 
 @test "disconnect Help" {
@@ -72,9 +80,4 @@
 
 @test "delete namespace" {
   forIofogCTL "delete -n iofogctlTest"
-}
-
-@test "deploy test yaml" {
-  skip
-  forIofogCTL "deploy ~/.iofog.yaml"
 }

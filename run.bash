@@ -108,6 +108,13 @@ function printSuiteResult() {
   fi
 }
 
+function testSuiteIofogCTL {
+  echo "--- RUNNING IOFOGCTL SMOKE TEST SUITE ---"
+  bats tests/iofogctl/smoke.bats
+  echo "--- RUNNING IOFOGCTL FUNCTIONAL TEST SUITE ---"
+  bats tests/iofogctl/functional.bats
+}
+
 function testSuiteControllerSmoke() {
   if [[ -n "${CONTROLLER_HOST}" ]] && [[ -n "${CONTROLLER_EMAIL}" ]] && [[ -n "${CONTROLLER_PASSWORD}" ]]; then
     echo "--- Running CONTROLLER SMOKE TEST SUITE ---"
@@ -235,10 +242,8 @@ SUITE_KUBERNETES_STATUS="SKIPPED"
 # TODO: (lkrcal) Enable these tests when ready for platform pipeline
 TEST_COUNT_CTL=$(bats -c tests/smoke/agent.bats)
 TEST_COUNTS+=(${TEST_COUNT_CTL})
-#bats tests/iofogctl/iofogctl.bats
-echo "--- Skipping IOFOGCTL TEST SUITE ---"
-SUITE_IOFOGCTL_STATUS="SKIPPED"
-
+testSuiteIofogCTL
+SUITE_IOFOGCTL_STATUS=$?
 
 echo "--- Test Results: ---
 
