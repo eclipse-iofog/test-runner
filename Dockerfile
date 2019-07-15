@@ -26,5 +26,3 @@ COPY tests /tests/
 
 # Run our tests
 ENTRYPOINT ["/bin/sh", "-c", "/run.bash"]
-
-CMD tail -f /dev/null
