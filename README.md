@@ -40,3 +40,14 @@ docker run --name test-runner \
         -e AGENTS="root@1.2.3.4:6451,user@6.7.8.9" \
         iofog/test-runner:latest
 ```
+
+## Test Results
+
+The output of this test-suite currently is a single XML File that is Junit-XML compliant.
+This can be used in development pipelines on most DevOps infrastructure to display test results
+in easy to consume factor.
+
+This is used in Azure Pipelines to display each builds pass/fail for both entire test suites
+as well as for specific tests we may see multiple failures in, to help identify issues that may not be consistent.
+
+The output is currently denoted as TEST-RESULTS.xml
