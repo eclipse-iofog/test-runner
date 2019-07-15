@@ -208,6 +208,8 @@ function buildXML()
         echo "</testsuite>" >> "${MY_XML}"
     done
     echo "</testsuites>" >> "${MY_XML}"
+
+    mv ${MY_XML} /root/test-results/.
 }
 
 
