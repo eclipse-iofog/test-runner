@@ -203,9 +203,9 @@ function buildXML()
     echo "<?xml version=1.0 encoding=UTF-8?>" >> "$MY_XML"
     echo "<testsuites skipped=${SKIPPED} failures=${FAILURES} tests=${TEST_COUNT}>" >> "${MY_XML}"
     for test_name in ${TESTS[@]}; do
-        echo "<testsuite name=${test_name} id=${idx}>" >> "${MY_XML}"
+        echo "   <testsuite name=${test_name} id=${idx}>" >> "${MY_XML}"
         idx+=1
-        echo "</testsuite>" >> "${MY_XML}"
+        echo "   </testsuite>" >> "${MY_XML}"
     done
     echo "</testsuites>" >> "${MY_XML}"
 
