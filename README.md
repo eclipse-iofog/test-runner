@@ -50,4 +50,4 @@ in easy to consume factor.
 This is used in Azure Pipelines to display each builds pass/fail for both entire test suites
 as well as for specific tests we may see multiple failures in, to help identify issues that may not be consistent.
 
-The output is currently denoted as TEST-RESULTS.xml
+The test output is file is `TEST-RESULTS.xml` and is stored in `/root/test-results` of the test-runner container.   
