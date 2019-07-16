@@ -1,23 +1,37 @@
 ---
--  config:
-    - testset: "Destroying Weather App to Iofog"
-    - timeout: 600000 # 10 seconds
+- config:
+  - testset: "Destroying Weather App to Iofog"
+  - timeout: 600000 # 10 seconds
+  - generators:
+     - 'userEmail': {type: 'env_variable', variable_name: 'CONTROLLER_EMAIL'}
+     - 'userPassword': {type: 'env_variable', variable_name: 'CONTROLLER_PASSWORD'}
 
 - test:
       - name: "Login"
       - group: "Destroy Weather Microservice"
       - url: "/api/v3/user/login"
       - headers: {'Content-Type': 'application/json'}
-      - body: '{"email":"user@domain.com","password":"#Bugs4Fun"}'
+      - generator_binds: {userEmail: userEmail, userPassword: userPassword}
+      - body: {template: '{"email":"$userEmail","password":"$userPassword"}'}
       - method: "POST"
       - expected_status: [200]
       - extract_binds:
         - 'accessToken': {'jsonpath_mini': 'accessToken'}
 
 - test:
+      - name: "Get flows"
+      - group: "Destroy Weather Microservice"
+      - url: "/api/v3/flow"
+      - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
+      - method: "GET"
+      - expected_status: [200]
+      - extract_binds:
+        - 'flowID': {'jmespath': "flows[?name=='Test Flow'].id | [0]"}
+
+- test:
       - name: "Get Microservice UUID"
       - group: "Destroy Weather Microservice"
-      - url: "/api/v3/microservices?flowId=1"
+      - url: {template: "/api/v3/microservices?flowId=$flowID"}
       - headers: {template:{'Content-Type': 'application/json', 'Authorization': "$accessToken"}}
       - method: "GET"
       - expected_status: [200]

@@ -2,7 +2,7 @@
 
 . tests/functions.bash
 
-importAgents
+#importAgents
 
 @test "Checking SSH Connection" {
   forAgents "echo Connected"
@@ -18,7 +18,7 @@ importAgents
 #}
 
 @test "iofog-agent version" {
-  forAgentsOutputContains "iofog-agent version" "1.0"
+  forAgentsOutputContains "iofog-agent version" "ioFog"
 }
 
 @test "iofog-agent info" {
