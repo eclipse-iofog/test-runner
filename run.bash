@@ -200,7 +200,7 @@ function buildXML()
     MY_XML="${PWD}/tests/TEST-RESULTS.xml"
     touch "${MY_XML}"
     idx=0
-    echo '<?xml version='1.0' encoding='UTF-8'?>' >> "$MY_XML"
+    echo "<?xml version=1.0 encoding='UTF-8?>" >> "$MY_XML"
     echo "<testsuites skipped=${SKIPPED} failures=${FAILURES} tests=${TEST_COUNT}>" >> "${MY_XML}"
     for test_name in ${TESTS[@]}; do
         echo "<testsuite name=${test_name} id=${idx}>" >> "${MY_XML}"
