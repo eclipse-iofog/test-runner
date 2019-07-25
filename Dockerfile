@@ -20,6 +20,9 @@ RUN git clone https://github.com/sstephenson/bats.git && cd bats && ./install.sh
 # Install the pyresttest and deps (the basis of all our smoke tests)
 RUN pip install pyresttest jsonschema future shyaml jmespath
 
+# Make dir for test results
+RUN mkdir -p /test-results
+
 # Copy over all the files we need
 COPY run.bash /
 COPY tests /tests/

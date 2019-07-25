@@ -2,11 +2,10 @@
 
 set -o noclobber -o nounset
 
-TESTS=( "integration" "smoke" "iofogctl" "k4g" )
-TEST_COUNTS=()
-TEST_COUNT=0
-FAILURES=0
-SKIPPED=0
+TEST_TOTAL_COUNT=0
+TEST_SUCCESS_COUNT=0
+TEST_SKIPPED_COUNT=0
+TEST_FAILURE_COUNT=0
 
 function loadConfiguration() {
   NAMESPACE="${NAMESPACE:-iofog}"
@@ -96,15 +95,24 @@ function checkAgent() {
 
 function printSuiteResult() {
   local SUITE_STATUS="$1"
-  ${TEST_COUNT}=${TEST_COUNT} + 1
   if [[ "${SUITE_STATUS}" == "SKIPPED" ]]; then
     echo -n "SKIPPED"
-    ${SKIPPED}=${SKIPPED} + 1
   elif [[ ${SUITE_STATUS} -eq 0 ]]; then
     echo -n "OK"
   else
-    ${FAILURES}=${FAILURES} + 1
     echo -n "FAIL"
+  fi
+}
+
+function countSuiteResult() {
+  local SUITE_STATUS="$1"
+  TEST_TOTAL_COUNT=$((TEST_TOTAL_COUNT+1))
+  if [[ "${SUITE_STATUS}" == "SKIPPED" ]]; then
+    TEST_SKIPPED_COUNT=$((TEST_SKIPPED_COUNT+1))
+  elif [[ ${SUITE_STATUS} -eq 0 ]]; then
+    TEST_SUCCESS_COUNT=$((TEST_SUCCESS_COUNT+1))
+  else
+    TEST_FAILURE_COUNT=$((TEST_FAILURE_COUNT+1))
   fi
 }
 
@@ -133,8 +141,6 @@ function testSuiteConnectorSmoke() {
 }
 
 function testSuiteAgentsSmoke() {
-  TEST_COUNT_AGENT=$(bats -c tests/smoke/agent.bats)
-  TEST_COUNTS+=(${TEST_COUNT_AGENT})
   if [[ ${#AGENTS_ARR[@]} -gt 0 ]]; then
     echo "--- Running AGENT SMOKE TEST SUITE ---"
     bats tests/smoke/agent.bats
@@ -197,21 +203,25 @@ function testSuiteBasicIntegration() {
 
 function buildXML()
 {
-    MY_XML="${PWD}/tests/TEST-RESULTS.xml"
-    touch "${MY_XML}"
-    idx=0
-    echo "<?xml version=1.0 encoding=UTF-8?>" >> "$MY_XML"
-    echo "<testsuites skipped=${SKIPPED} failures=${FAILURES} tests=${TEST_COUNT}>" >> "${MY_XML}"
-    for test_name in ${TESTS[@]}; do
-        echo "   <testsuite name=${test_name} id=${idx}>" >> "${MY_XML}"
-        idx+=1
-        echo "   </testsuite>" >> "${MY_XML}"
-    done
-    echo "</testsuites>" >> "${MY_XML}"
+  countSuiteResult "${SUITE_CONTROLLER_SMOKE_STATUS}"
+  countSuiteResult "${SUITE_CONNECTOR_SMOKE_STATUS}"
+  countSuiteResult "${SUITE_AGENT_SMOKE_STATUS}"
+  countSuiteResult "${SUITE_BASIC_INTEGRATION_STATUS}"
+  countSuiteResult "${SUITE_KUBERNETES_STATUS}"
+  countSuiteResult "${SUITE_IOFOGCTL_STATUS}"
 
-    mv ${MY_XML} /root/test-results/.
+  MY_XML="/test-results/TEST-RESULTS.xml"
+  rm -f "${MY_XML}"
+  echo "<?xml version=1.0 encoding=UTF-8?>" > "${MY_XML}"
+  echo "<testsuites skipped=${TEST_SKIPPED_COUNT} failures=${TEST_FAILURE_COUNT} tests=${TEST_TOTAL_COUNT}>" >> "${MY_XML}"
+  echo "  <testsuite name='CONTROLLER_SMOKE' id=0> </testsuite>" >> "${MY_XML}"
+  echo "  <testsuite name='CONNECTOR_SMOKE' id=1> </testsuite>" >> "${MY_XML}"
+  echo "  <testsuite name='AGENT_SMOKE' id=2> </testsuite>" >> "${MY_XML}"
+  echo "  <testsuite name='BASIC_INTEGRATION' id=3> </testsuite>" >> "${MY_XML}"
+  echo "  <testsuite name='KUBERNETES' id=4> </testsuite>" >> "${MY_XML}"
+  echo "  <testsuite name='IOFOGCTL' id=5> </testsuite>" >> "${MY_XML}"
+  echo "</testsuites>" >> "${MY_XML}"
 }
-
 
 loadConfiguration
 [[ -n "${CONTROLLER}" ]] && checkController "${CONTROLLER_HOST}"
@@ -229,18 +239,13 @@ SUITE_CONNECTOR_SMOKE_STATUS="SKIPPED"
 # TODO: (lkrcal) Enable these tests when ready for platform pipeline
 # TODO: (xaoc000) Ensure each of these get sub functions and do test_counting there
 #bats tests/k4g/k4g.bats
-TEST_COUNT_K4G=$(bats -c tests/smoke/agent.bats)
-TEST_COUNTS+=(${TEST_COUNT_K4G})
 echo "--- Skipping KUBERNETES TEST SUITE ---"
 SUITE_KUBERNETES_STATUS="SKIPPED"
 
 # TODO: (lkrcal) Enable these tests when ready for platform pipeline
-TEST_COUNT_CTL=$(bats -c tests/smoke/agent.bats)
-TEST_COUNTS+=(${TEST_COUNT_CTL})
 #bats tests/iofogctl/iofogctl.bats
 echo "--- Skipping IOFOGCTL TEST SUITE ---"
 SUITE_IOFOGCTL_STATUS="SKIPPED"
-
 
 echo "--- Test Results: ---
 
@@ -252,6 +257,8 @@ SUITE_KUBERNETES_STATUS:        $( printSuiteResult "${SUITE_KUBERNETES_STATUS}"
 SUITE_IOFOGCTL_STATUS:          $( printSuiteResult "${SUITE_IOFOGCTL_STATUS}")
 "
 
+buildXML
+
 if [[ "${SUITE_CONTROLLER_SMOKE_STATUS}" =~ ^(0|SKIPPED)$ ]] && \
    [[ "${SUITE_CONNECTOR_SMOKE_STATUS}" =~ ^(0|SKIPPED)$ ]] && \
    [[ "${SUITE_AGENT_SMOKE_STATUS}" =~ ^(0|SKIPPED)$ ]] && \
@@ -259,10 +266,8 @@ if [[ "${SUITE_CONTROLLER_SMOKE_STATUS}" =~ ^(0|SKIPPED)$ ]] && \
    [[ "${SUITE_KUBERNETES_STATUS}" =~ ^(0|SKIPPED)$ ]] && \
    [[ "${SUITE_IOFOGCTL_STATUS}" =~ ^(0|SKIPPED)$ ]]; then
   echo "--- SUCCESS ---"
-  buildXML
   exit 0
 else
   echo "--- SOME TESTS FAILED ---"
-  buildXML
   exit 1
 fi
