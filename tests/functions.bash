@@ -7,7 +7,7 @@ function forAgentsOutputContains(){
         local USERNAME_HOST="${AGENT%:*}"
         local PORT="$(echo "${AGENT}" | cut -d':' -s -f2)"
         local PORT="${PORT:-22}"
-        RESULT=$(ssh -o StrictHostKeyChecking=no "${USERNAME_HOST}" -p "${PORT}" "sudo $CMD")
+        local RESULT=$(ssh -o StrictHostKeyChecking=no "${USERNAME_HOST}" -p "${PORT}" "sudo $CMD")
         [[ "$RESULT" == *"$SUBSTR"* ]]
     done
 }
