@@ -210,17 +210,21 @@ function buildXML()
   countSuiteResult "${SUITE_KUBERNETES_STATUS}"
   countSuiteResult "${SUITE_IOFOGCTL_STATUS}"
 
+  if [[ ! -d "/root/test-results" ]]; then
+    echo "Directory /root/test-results/ does not exist (or is not mounted in Docker container). Cannot export JUnit XML test results!"
+  else
   MY_XML="/test-results/TEST-RESULTS.xml"
-  rm -f "${MY_XML}"
-  echo "<?xml version=1.0 encoding=UTF-8?>" > "${MY_XML}"
-  echo "<testsuites skipped=${TEST_SKIPPED_COUNT} failures=${TEST_FAILURE_COUNT} tests=${TEST_TOTAL_COUNT}>" >> "${MY_XML}"
-  echo "  <testsuite name='CONTROLLER_SMOKE' id=0> </testsuite>" >> "${MY_XML}"
-  echo "  <testsuite name='CONNECTOR_SMOKE' id=1> </testsuite>" >> "${MY_XML}"
-  echo "  <testsuite name='AGENT_SMOKE' id=2> </testsuite>" >> "${MY_XML}"
-  echo "  <testsuite name='BASIC_INTEGRATION' id=3> </testsuite>" >> "${MY_XML}"
-  echo "  <testsuite name='KUBERNETES' id=4> </testsuite>" >> "${MY_XML}"
-  echo "  <testsuite name='IOFOGCTL' id=5> </testsuite>" >> "${MY_XML}"
-  echo "</testsuites>" >> "${MY_XML}"
+    rm -f "${MY_XML}"
+    echo "<?xml version=1.0 encoding=UTF-8?>" > "${MY_XML}"
+    echo "<testsuites skipped=${TEST_SKIPPED_COUNT} failures=${TEST_FAILURE_COUNT} tests=${TEST_TOTAL_COUNT}>" >> "${MY_XML}"
+    echo "  <testsuite name='CONTROLLER_SMOKE' id=0> </testsuite>" >> "${MY_XML}"
+    echo "  <testsuite name='CONNECTOR_SMOKE' id=1> </testsuite>" >> "${MY_XML}"
+    echo "  <testsuite name='AGENT_SMOKE' id=2> </testsuite>" >> "${MY_XML}"
+    echo "  <testsuite name='BASIC_INTEGRATION' id=3> </testsuite>" >> "${MY_XML}"
+    echo "  <testsuite name='KUBERNETES' id=4> </testsuite>" >> "${MY_XML}"
+    echo "  <testsuite name='IOFOGCTL' id=5> </testsuite>" >> "${MY_XML}"
+    echo "</testsuites>" >> "${MY_XML}"
+  fi
 }
 
 loadConfiguration
