@@ -5,7 +5,7 @@
 FROM python:3-alpine
 
 # Install dependencies
-RUN apk add --no-cache jq git bash libcurl curl
+RUN apk add --no-cache jq git bash libcurl curl openssh-client
 
 # Install pycurl
 ENV PYCURL_SSL_LIBRARY=openssl
