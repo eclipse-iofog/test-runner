@@ -213,7 +213,7 @@ function buildXML()
   if [[ ! -d "/root/test-results" ]]; then
     echo "Directory /root/test-results/ does not exist (or is not mounted in Docker container). Cannot export JUnit XML test results!"
   else
-  MY_XML="/test-results/TEST-RESULTS.xml"
+  MY_XML="/root/test-results/TEST-RESULTS.xml"
     rm -f "${MY_XML}"
     echo "<?xml version=1.0 encoding=UTF-8?>" > "${MY_XML}"
     echo "<testsuites skipped=${TEST_SKIPPED_COUNT} failures=${TEST_FAILURE_COUNT} tests=${TEST_TOTAL_COUNT}>" >> "${MY_XML}"
