@@ -56,7 +56,13 @@ function loadConfiguration() {
 
 function checkController() {
   local CONTROLLER_HOST="$1"
-  local STATUS=$(curl --request GET --url "${CONTROLLER_HOST}/status" 2>/dev/null | jq -r ".status")
+  for IDX in $(seq 1 30); do
+    STATUS=$(curl --request GET --url "${CONTROLLER_HOST}/status" 2>/dev/null | jq -r ".status")
+    if [[ "${STATUS}" == "running" ]]; then
+      break
+    fi
+    sleep 1
+  done
   if [[ "${STATUS}" != "online" ]]; then
     echo "Controller ${CONTROLLER_HOST} not ready..."
     echo "${STATUS}"
@@ -67,9 +73,15 @@ function checkController() {
 
 function checkConnector() {
   local CONNECTOR_HOST="$1"
-  local STATUS=$(curl --request POST --url "${CONNECTOR_HOST}/status" \
-                --header 'Content-Type: application/x-www-form-urlencoded' --data mappingid=all 2>/dev/null \
-             | jq -r '.status')
+  for IDX in $(seq 1 30); do
+    STATUS=$(curl --request POST --url "${CONNECTOR_HOST}/status" \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--data mappingid=all 2>/dev/null | jq -r '.status')
+    if [[ "${STATUS}" == "running" ]]; then
+      break
+    fi
+    sleep 1
+  done
   if [[ "${STATUS}" != "running" ]]; then
     echo "Connector ${CONNECTOR_HOST} not ready..."
     echo "${STATUS}"
