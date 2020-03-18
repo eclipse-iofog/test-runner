@@ -9,47 +9,21 @@ TEST_FAILURE_COUNT=0
 
 function loadConfiguration() {
   NAMESPACE="${NAMESPACE:-iofog}"
-  CONTROLLER="${CONTROLLER:-}"
-  CONNECTOR="${CONNECTOR:-}"
-  CONTROLLER_HOST=""
-  CONTROLLER_EMAIL="${CONTROLLER_EMAIL:-user@domain.com}"
-  CONTROLLER_PASSWORD="${CONTROLLER_PASSWORD:-#Bugs4Fun}"
-  CONNECTOR_HOST=""
-  AGENTS="${AGENTS:-}"
-  AGENTS_ARR=()
-
-  # TODO: (lkrcal) move this to k8s deployment (init containers or such), this script should not be k8s aware
-  CONTEXT=$(kubectl config current-context 2>/dev/null)
-  if [[ -n "${CONTEXT}" ]]; then
-    echo "Found kubernetes context, using ${CONTEXT} to retrieve configuration..."
-    CONTROLLER=$(kubectl -n "${NAMESPACE}" get svc controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
-    CONNECTOR=$(kubectl -n "${NAMESPACE}" get svc connector -o jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
-  fi
-
-  if [[ -n "${CONTROLLER}" ]]; then
-    CONTROLLER_HOST="http://${CONTROLLER}/api/v3"
-  fi
-
-  if [[ -n "${CONNECTOR}" ]]; then
-    CONNECTOR_HOST="http://${CONNECTOR}/api/v2"
-  fi
-
-  IFS=',' read -r -a AGENTS_ARR <<< "${AGENTS}"
+  CONTROLLER="$(iofogctl describe controlplane | grep endpoint | awk '{print $2}')"
+  CONTROLLER_HOST="${CONTROLLER}/api/v3"
+  CONTROLLER_EMAIL="$(iofogctl describe controlplane | grep email | awk '{print $2}')"
+  CONTROLLER_PASSWORD="$(iofogctl describe controlplane | grep password | awk '{print $2}' | tr -d \')"
+  AGENTS=(${AGENTS:-$(iofogctl get agents | awk 'NR>=5 {print $1}' | sed '$d')})
 
   echo "--- CONFIGURATION ---"
   echo -n "Controller: "
-  if [[ -n "${CONTROLLER}" ]]; then
-    echo -n "${CONTROLLER} (username: ${CONTROLLER_EMAIL}, password: $(echo "${CONTROLLER_PASSWORD}" | sed -r 's/./*/g'))"
-  fi
-  echo
-  echo -n "Connector: "
-  if [[ -n "${CONNECTOR}" ]]; then
-    echo -n "${CONNECTOR}"
+  if [[ -n "${CONTROLLER_HOST}" ]]; then
+    echo -n "${CONTROLLER_HOST} (username: ${CONTROLLER_EMAIL}, password: $(echo "${CONTROLLER_PASSWORD}" | sed -r 's/./*/g'))"
   fi
   echo
   echo -n "Agents: "
-  if [[ ${#AGENTS_ARR[@]} -gt 0 ]]; then
-    echo -n "${AGENTS_ARR[@]}"
+  if [[ ${#AGENTS[@]} -gt 0 ]]; then
+    echo -n "${AGENTS[@]}"
   fi
   echo
 }
@@ -71,34 +45,12 @@ function checkController() {
   echo "Controller ${CONTROLLER_HOST} is ready."
 }
 
-function checkConnector() {
-  local CONNECTOR_HOST="$1"
-  for IDX in $(seq 1 30); do
-    STATUS=$(curl --request POST --url "${CONNECTOR_HOST}/status" \
---header 'Content-Type: application/x-www-form-urlencoded' \
---data mappingid=all 2>/dev/null | jq -r '.status')
-    if [[ "${STATUS}" == "running" ]]; then
-      break
-    fi
-    sleep 1
-  done
-  if [[ "${STATUS}" != "running" ]]; then
-    echo "Connector ${CONNECTOR_HOST} not ready..."
-    echo "${STATUS}"
-    exit 1
-  fi
-  echo "Connector ${CONNECTOR_HOST} is ready."
-}
-
 function checkAgent() {
   local AGENT="$1"
-  local USERNAME_HOST="${AGENT%:*}"
-  local PORT="$(echo "${AGENT}" | cut -d':' -s -f2)"
-  local PORT="${PORT:-22}"
-  echo "Waiting for Agent ${USERNAME_HOST}:${PORT}..."
-  STATUS="$(ssh -o StrictHostKeyChecking=no "${USERNAME_HOST}" -p "${PORT}" sudo iofog-agent status | grep 'Connection to Controller')"
+  echo "Waiting for Agent ${AGENT}..."
+  STATUS="$(iofogctl legacy agent $AGENT status | grep 'Connection to Controller')"
   if [[ "${STATUS}" != *"ok"* ]]; then
-    echo "Agent ${USERNAME_HOST}:${PORT} not ready!"
+    echo "Agent $AGENT not ready!"
     echo "${STATUS}"
     exit 1
   fi
@@ -131,7 +83,7 @@ function countSuiteResult() {
 function testSuiteControllerSmoke() {
   if [[ -n "${CONTROLLER_HOST}" ]] && [[ -n "${CONTROLLER_EMAIL}" ]] && [[ -n "${CONTROLLER_PASSWORD}" ]]; then
     echo "--- Running CONTROLLER SMOKE TEST SUITE ---"
-    pyresttest http://"${CONTROLLER}" tests/smoke/controller.yml
+    pyresttest "${CONTROLLER}" tests/smoke/controller.yml
     SUITE_CONTROLLER_SMOKE_STATUS=$?
   else
     echo "--- Skipping CONTROLLER SMOKE TEST SUITE ---"
@@ -140,20 +92,8 @@ function testSuiteControllerSmoke() {
   fi
 }
 
-function testSuiteConnectorSmoke() {
-  if [[ -n "${CONNECTOR_HOST}" ]]; then
-    echo "--- Running CONNECTOR SMOKE TEST SUITE ---"
-    pyresttest http://"${CONNECTOR}" tests/smoke/connector.yml
-    SUITE_CONNECTOR_SMOKE_STATUS=$?
-  else
-    echo "--- Skipping CONNECTOR SMOKE TEST SUITE ---"
-    echo "Insufficient configuration to run this test suite!"
-    SUITE_CONNECTOR_SMOKE_STATUS="SKIPPED"
-  fi
-}
-
 function testSuiteAgentsSmoke() {
-  if [[ ${#AGENTS_ARR[@]} -gt 0 ]]; then
+  if [[ ${#AGENTS[@]} -gt 0 ]]; then
     echo "--- Running AGENT SMOKE TEST SUITE ---"
     bats tests/smoke/agent.bats
     SUITE_AGENT_SMOKE_STATUS=$?
@@ -165,7 +105,7 @@ function testSuiteAgentsSmoke() {
 }
 
 function testSuiteBasicIntegration() {
-  if [[ ${#AGENTS_ARR[@]} -gt 0 ]] && [[ -n "${CONTROLLER_HOST}" ]] && [[ -n "${CONTROLLER_EMAIL}" ]] && [[ -n "${CONTROLLER_PASSWORD}" ]]; then
+  if [[ ${#AGENTS[@]} -gt 0 ]] && [[ -n "${CONTROLLER_HOST}" ]] && [[ -n "${CONTROLLER_EMAIL}" ]] && [[ -n "${CONTROLLER_PASSWORD}" ]]; then
 
     export CONTROLLER_EMAIL
     export CONTROLLER_PASSWORD
@@ -173,9 +113,9 @@ function testSuiteBasicIntegration() {
     SUITE_BASIC_INTEGRATION_STATUS=0
 
     # Spin up microservices
-    for IDX in "${!AGENTS_ARR[@]}"; do
+    for IDX in "${!AGENTS[@]}"; do
       export IDX
-      pyresttest http://"${CONTROLLER}" tests/integration/deploy-weather.yml
+      pyresttest "${CONTROLLER}" tests/integration/deploy-weather.yml
       if [[ "$?" -gt 0 ]]; then
         SUITE_BASIC_INTEGRATION_STATUS=1
       fi
@@ -198,9 +138,9 @@ function testSuiteBasicIntegration() {
     #  pyresttest http://"$ENDPOINT" tests/integration/test-weather.yml ; (( ERR |= "$?" ))
     #done
 
-    for IDX in "${!AGENTS_ARR[@]}"; do
+    for IDX in "${!AGENTS[@]}"; do
       export IDX
-      pyresttest http://"${CONTROLLER}" tests/integration/destroy-weather.yml
+      pyresttest "${CONTROLLER}" tests/integration/destroy-weather.yml
        if [[ "$?" -gt 0 ]]; then
         SUITE_BASIC_INTEGRATION_STATUS=2
       fi
@@ -216,7 +156,6 @@ function testSuiteBasicIntegration() {
 function buildXML()
 {
   countSuiteResult "${SUITE_CONTROLLER_SMOKE_STATUS}"
-  countSuiteResult "${SUITE_CONNECTOR_SMOKE_STATUS}"
   countSuiteResult "${SUITE_AGENT_SMOKE_STATUS}"
   countSuiteResult "${SUITE_BASIC_INTEGRATION_STATUS}"
   countSuiteResult "${SUITE_KUBERNETES_STATUS}"
@@ -230,7 +169,6 @@ function buildXML()
     echo "<?xml version=1.0 encoding=UTF-8?>" > "${MY_XML}"
     echo "<testsuites skipped=${TEST_SKIPPED_COUNT} failures=${TEST_FAILURE_COUNT} tests=${TEST_TOTAL_COUNT}>" >> "${MY_XML}"
     echo "  <testsuite name='CONTROLLER_SMOKE' id=0> </testsuite>" >> "${MY_XML}"
-    echo "  <testsuite name='CONNECTOR_SMOKE' id=1> </testsuite>" >> "${MY_XML}"
     echo "  <testsuite name='AGENT_SMOKE' id=2> </testsuite>" >> "${MY_XML}"
     echo "  <testsuite name='BASIC_INTEGRATION' id=3> </testsuite>" >> "${MY_XML}"
     echo "  <testsuite name='KUBERNETES' id=4> </testsuite>" >> "${MY_XML}"
@@ -240,17 +178,11 @@ function buildXML()
 }
 
 loadConfiguration
-[[ -n "${CONTROLLER}" ]] && checkController "${CONTROLLER_HOST}"
-[[ -n "${CONNECTOR}" ]] && checkConnector "${CONNECTOR_HOST}"
-for AGENT in "${AGENTS_ARR[@]}"; do checkAgent "${AGENT}"; done
+checkController "${CONTROLLER_HOST}"
+for AGENT in "${AGENTS[@]}"; do checkAgent "${AGENT}"; done
 testSuiteControllerSmoke
 testSuiteAgentsSmoke
 testSuiteBasicIntegration
-
-# TODO: (Serge) Enable Connector tests when Connector is stable
-# testSuiteConnectorSmoke
-echo "--- Skipping CONNECTOR SMOKE TEST SUITE ---"
-SUITE_CONNECTOR_SMOKE_STATUS="SKIPPED"
 
 # TODO: (lkrcal) Enable these tests when ready for platform pipeline
 # TODO: (xaoc000) Ensure each of these get sub functions and do test_counting there
@@ -266,7 +198,6 @@ SUITE_IOFOGCTL_STATUS="SKIPPED"
 echo "--- Test Results: ---
 
 SUITE_CONTROLLER_SMOKE_STATUS:  $( printSuiteResult "${SUITE_CONTROLLER_SMOKE_STATUS}")
-SUITE_CONNECTOR_SMOKE_STATUS:   $( printSuiteResult "${SUITE_CONNECTOR_SMOKE_STATUS}")
 SUITE_AGENT_SMOKE_STATUS:       $( printSuiteResult "${SUITE_AGENT_SMOKE_STATUS}")
 SUITE_BASIC_INTEGRATION_STATUS: $( printSuiteResult "${SUITE_BASIC_INTEGRATION_STATUS}")
 SUITE_KUBERNETES_STATUS:        $( printSuiteResult "${SUITE_KUBERNETES_STATUS}")
@@ -276,7 +207,6 @@ SUITE_IOFOGCTL_STATUS:          $( printSuiteResult "${SUITE_IOFOGCTL_STATUS}")
 buildXML
 
 if [[ "${SUITE_CONTROLLER_SMOKE_STATUS}" =~ ^(0|SKIPPED)$ ]] && \
-   [[ "${SUITE_CONNECTOR_SMOKE_STATUS}" =~ ^(0|SKIPPED)$ ]] && \
    [[ "${SUITE_AGENT_SMOKE_STATUS}" =~ ^(0|SKIPPED)$ ]] && \
    [[ "${SUITE_BASIC_INTEGRATION_STATUS}" =~ ^(0|SKIPPED)$ ]] && \
    [[ "${SUITE_KUBERNETES_STATUS}" =~ ^(0|SKIPPED)$ ]] && \

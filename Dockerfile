@@ -2,16 +2,16 @@
 # Test Runner is an image built to execute a set of unit and integration tests for
 # the 'demo' project.
 #
-FROM python:3-alpine
+FROM python:3-buster
 
 # Install dependencies
-RUN apk add --no-cache jq git bash libcurl curl openssh-client
+RUN apt-get update -y
+RUN apt-get install -y jq git bash libcurl4 curl openssh-client
 
 # Install pycurl
 ENV PYCURL_SSL_LIBRARY=openssl
-RUN apk add --no-cache --virtual .build-dependencies build-base curl-dev \
-    && pip install pycurl \
-    && apk del .build-dependencies
+RUN apt-get install -y build-essential \
+    && pip install pycurl
 
 RUN pip install \
   future \
@@ -26,6 +26,11 @@ RUN pip install \
 #    chmod +x ./kubectl && mv ./kubectl /usr/local/bin/kubectl
 
 RUN git clone https://github.com/sstephenson/bats.git && cd bats && ./install.sh /usr/local && cd .. && rm -rf bats
+
+# Install iofogctl
+RUN curl https://packagecloud.io/install/repositories/iofog/iofogctl/script.deb.sh | bash
+RUN apt install iofogctl -y
+RUN iofogctl version
 
 # Make dir for test results
 RUN mkdir -p /test-results
