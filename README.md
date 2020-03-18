@@ -24,13 +24,28 @@ You must have iofogctl configured with its default namespace pointing to the ECN
 | Basic microservice deployment integration tests | Sets up users and catalog entries, deploys and destroys microservices on each Agent | <ul><li>CONTROLLER</li><li>CONTROLLER_EMAIL</li><li>CONTROLLER_PASSWORD</li><li>AGENTS</li></ul> |
 
 
-Example usage of the test runner with full configuration:
+Example usage of the test runner with iofogctl configuration:
 
 ```bash
 docker run --name test-runner \
         -v ~/.iofog/:/root/.iofog/ \
         iofog/test-runner:latest
 ```
+
+Example usage of the test runner with endpoint configurations configuration:
+
+```bash
+docker run --name test-runner \
+        -v ~/.ssh/my_iofog_agent_ssh_key:/root/.ssh/id_rsa \
+        -e CONTROLLER="1.2.3.4:51121" \
+        -e CONTROLLER_EMAIL="user@domain.com" \
+        -e CONTROLLER_PASSWORD="#Bugs4Fun" \
+        -e AGENT_USER="root" \
+        -e AGENT_KEY="/root/.ssh/id_rsa" \
+        iofog/test-runner:latest
+```
+
+Note that whenever AGENTS is specified, you need to mount appropriate ssh keys to /root/.ssh of the test-runner containers. The keys can be in any default SSH position: ~/.ssh/id_dsa, ~/.ssh/id_ecdsa, ~/.ssh/id_ed25519 and ~/.ssh/id_rsa.
 
 ## Test Results
 

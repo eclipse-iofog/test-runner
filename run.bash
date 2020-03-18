@@ -8,11 +8,26 @@ TEST_SKIPPED_COUNT=0
 TEST_FAILURE_COUNT=0
 
 function loadConfiguration() {
-  NAMESPACE="${NAMESPACE:-iofog}"
-  CONTROLLER="$(iofogctl describe controlplane | grep endpoint | awk '{print $2}')"
+  if [[ -n "${CONTROLLER}" ]]; then
+    # Controller informations provided
+    # Prefix Controller with http:// if needed
+    if [[ ${CONTROLLER} != "http"* ]]; then
+      CONTROLLER="http://${CONTROLLER}"
+    fi
+    CONTROLLER_EMAIL="${CONTROLLER_EMAIL:-user@domain.com}"
+    CONTROLLER_PASSWORD="${CONTROLLER_PASSWORD:-#Bugs4Fun}"
+    iofogctl connect --ecn-addr "${CONTROLLER}" --name controller --email "${CONTROLLER_EMAIL}" --pass "${CONTROLLER_PASSWORD}"
+  else
+    # iofogctl must be used
+    CONTROLLER="$(iofogctl describe controlplane | grep endpoint | awk '{print $2}')"
+    CONTROLLER_EMAIL="$(iofogctl describe controlplane | grep email | awk '{print $2}')"
+    CONTROLLER_PASSWORD="$(iofogctl describe controlplane | grep password | awk '{print $2}' | tr -d \')"
+  fi
+  if [[ -n "${AGENT_USER}" ]]; then
+    iofogctl configure agents --user "${AGENT_USER}" --key "${AGENT_KEYFILE}"
+  fi
+  CONTROLLER="${CONTROLLER:-$(iofogctl describe controlplane | grep endpoint | awk '{print $2}')}"
   CONTROLLER_HOST="${CONTROLLER}/api/v3"
-  CONTROLLER_EMAIL="$(iofogctl describe controlplane | grep email | awk '{print $2}')"
-  CONTROLLER_PASSWORD="$(iofogctl describe controlplane | grep password | awk '{print $2}' | tr -d \')"
   AGENTS=(${AGENTS:-$(iofogctl get agents | awk 'NR>=5 {print $1}' | sed '$d')})
 
   echo "--- CONFIGURATION ---"
