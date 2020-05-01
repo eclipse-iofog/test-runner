@@ -8,7 +8,9 @@ TEST_SKIPPED_COUNT=0
 TEST_FAILURE_COUNT=0
 
 function loadConfiguration() {
-  if [[ -n "${CONTROLLER}" ]]; then
+  CONTROLLER="${CONTROLLER:-}"
+  AGENT_USER="${AGENT_USER:-}"
+  if [[ ! -z "${CONTROLLER}" ]]; then
     # Controller informations provided
     # Prefix Controller with http:// if needed
     if [[ ${CONTROLLER} != "http"* ]]; then
@@ -21,9 +23,9 @@ function loadConfiguration() {
     # iofogctl must be used
     CONTROLLER="$(iofogctl describe controlplane | grep endpoint | awk '{print $2}')"
     CONTROLLER_EMAIL="$(iofogctl describe controlplane | grep email | awk '{print $2}')"
-    CONTROLLER_PASSWORD="$(iofogctl describe controlplane | grep password | awk '{print $2}' | tr -d \')"
+    CONTROLLER_PASSWORD="$(iofogctl describe controlplane | grep password | awk '{print $2}' | tr -d \' | base64 --decode)"
   fi
-  if [[ -n "${AGENT_USER}" ]]; then
+  if [[ ! -z "${AGENT_USER}" ]]; then
     iofogctl configure agents --user "${AGENT_USER}" --key "${AGENT_KEYFILE}"
   fi
   CONTROLLER="${CONTROLLER:-$(iofogctl describe controlplane | grep endpoint | awk '{print $2}')}"
