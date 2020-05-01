@@ -18,6 +18,7 @@ pr:
 variables:
   repository: 'focal-freedom-236620/test-runner'
   buildTag: $(Build.BuildId)
+  imageTag:
 
 jobs:
   - job: TestRunner
