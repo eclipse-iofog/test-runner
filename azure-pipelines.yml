@@ -17,6 +17,7 @@ pr:
 
 variables:
   repository: 'focal-freedom-236620/test-runner'
+  ref: $(Build.SourceBranch)
   buildTag: $(Build.BuildId)
   imageTag:
 
