@@ -11,6 +11,10 @@ The following test suites are available:
 
 Note that some of additional test suites are automatically skipped as of this release of Test Runner.
 
+## Prerequisites
+
+You must have iofogctl configured with its default namespace pointing to the ECN you want to test
+
 ## Usage
 
 | Test suite | Description | Required configuration |
@@ -20,26 +24,28 @@ Note that some of additional test suites are automatically skipped as of this re
 | Basic microservice deployment integration tests | Sets up users and catalog entries, deploys and destroys microservices on each Agent | <ul><li>CONTROLLER</li><li>CONTROLLER_EMAIL</li><li>CONTROLLER_PASSWORD</li><li>AGENTS</li></ul> |
 
 
-The format of the environment variables is the following:
-
-* _CONTROLLER_ - IP:PORT format (e.g. "1.2.3.4:51121")
-* _CONTROLLER_EMAIL_ - existing user identifier in Controller to use for testing (e.g. "user@domain.com")
-* _CONTROLLER_PASSWORD_ - login password for the user (e.g. "#Bugs4Fun")
-* _AGENTS_ - comma separated URI with user and optional port (e.g. root@1.2.3.4:6451,user@6.7.8.9)
-
-Note that whenever _AGENTS_ is specified, you need to mount appropriate ssh keys to /root/.ssh of the test-runner containers. The keys can be in any default SSH position: ~/.ssh/id_dsa, ~/.ssh/id_ecdsa, ~/.ssh/id_ed25519 and ~/.ssh/id_rsa.
-
-Example usage of the test runner with full configuration:
+Example usage of the test runner with iofogctl configuration:
 
 ```bash
 docker run --name test-runner \
-        -v ~/.ssh/my_iofog_ssh_key:/root/.ssh/id_rsa \
+        -v ~/.iofog/:/root/.iofog/ \
+        iofog/test-runner:latest
+```
+
+Example usage of the test runner with endpoint configurations configuration:
+
+```bash
+docker run --name test-runner \
+        -v ~/.ssh/my_iofog_agent_ssh_key:/root/.ssh/id_rsa \
         -e CONTROLLER="1.2.3.4:51121" \
         -e CONTROLLER_EMAIL="user@domain.com" \
         -e CONTROLLER_PASSWORD="#Bugs4Fun" \
-        -e AGENTS="root@1.2.3.4:6451,user@6.7.8.9" \
+        -e AGENT_USER="root" \
+        -e AGENT_KEY="/root/.ssh/id_rsa" \
         iofog/test-runner:latest
 ```
+
+Note that whenever AGENTS is specified, you need to mount appropriate ssh keys to /root/.ssh of the test-runner containers. The keys can be in any default SSH position: ~/.ssh/id_dsa, ~/.ssh/id_ecdsa, ~/.ssh/id_ed25519 and ~/.ssh/id_rsa.
 
 ## Test Results
 

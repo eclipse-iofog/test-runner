@@ -4,10 +4,7 @@ function forAgentsOutputContains(){
     local CMD="$1"
     local SUBSTR="$2"
     for AGENT in "${AGENTS[@]}"; do
-        local USERNAME_HOST="${AGENT%:*}"
-        local PORT="$(echo "${AGENT}" | cut -d':' -s -f2)"
-        local PORT="${PORT:-22}"
-        RESULT=$(ssh -o StrictHostKeyChecking=no "${USERNAME_HOST}" -p "${PORT}" "sudo $CMD")
+        local RESULT=$(iofogctl legacy agent $AGENT "$CMD")
         [[ "$RESULT" == *"$SUBSTR"* ]]
     done
 }
@@ -15,10 +12,7 @@ function forAgentsOutputContains(){
 function forAgents(){
     local CMD="$1"
     for AGENT in "${AGENTS[@]}"; do
-        local USERNAME_HOST="${AGENT%:*}"
-        local PORT="$(echo "${AGENT}" | cut -d':' -s -f2)"
-        local PORT="${PORT:-22}"
-        ssh -o StrictHostKeyChecking=no "${USERNAME_HOST}" -p "${PORT}" "sudo $CMD"
+        iofogctl legacy agent $AGENT "$CMD"
         [[ $? == 0 ]]
     done
 }
