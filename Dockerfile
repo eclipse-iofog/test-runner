@@ -30,6 +30,7 @@ RUN git clone https://github.com/sstephenson/bats.git && cd bats && ./install.sh
 # Install iofogctl
 RUN curl https://packagecloud.io/install/repositories/iofog/iofogctl/script.deb.sh | bash
 RUN apt install iofogctl -y
+RUN apt install iofogctl=3.0.0-alpha1 -y
 RUN iofogctl version
 
 # Make dir for test results
