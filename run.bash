@@ -8,7 +8,7 @@ TEST_SKIPPED_COUNT=0
 TEST_FAILURE_COUNT=0
 
 function loadConfiguration() {
-  if [[ -n "${CONTROLLER}" ]]; then
+  if [[ -n "${CONTROLLER:-}" ]]; then
     # Controller informations provided
     # Prefix Controller with http:// if needed
     if [[ ${CONTROLLER} != "http"* ]]; then
