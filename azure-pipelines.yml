@@ -51,7 +51,7 @@ jobs:
             latest
 
       - script: |
-          echo "gcr.io/${REPOSITORY}:${BUILDTAG}" > $(Build.ArtifactStagingDirectory)/docker-image.txt
+          echo "gcr.io/${REPOSITORY}:$(imageTag)" > $(Build.ArtifactStagingDirectory)/docker-image.txt
         displayName: 'Save Docker image name to artifact'
 
       - task: PublishPipelineArtifact@0
